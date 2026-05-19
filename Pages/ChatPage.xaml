@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:AiCharacterMaker.Models"
+             x:Class="AiCharacterMaker.Pages.ChatPage">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- ヘッダー -->
+        <Grid Grid.Row="0" BackgroundColor="White" Padding="16"
+              ColumnDefinitions="Auto,*">
+            <Button Grid.Column="0" Text="←" TextColor="#3B82F6"
+                    BackgroundColor="Transparent" Clicked="OnBackClicked"/>
+            <Label Grid.Column="1" x:Name="CharaNameLabel"
+                   Text="読み込み中…" FontSize="18" FontAttributes="Bold"
+                   VerticalOptions="Center"/>
+        </Grid>
+
+        <!-- メッセージ一覧 -->
+        <CollectionView Grid.Row="1" x:Name="MessagesView"
+                        Margin="16,8" ItemsSource="{Binding Messages}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Message">
+                    <Grid Padding="0,4">
+                        <!-- ユーザー（右寄せ） -->
+                        <Border BackgroundColor="#22C55E"
+                                StrokeShape="RoundRectangle 18,18,4,18"
+                                Padding="14,8" MaximumWidthRequest="280"
+                                HorizontalOptions="End"
+                                IsVisible="{Binding Role, Converter={StaticResource RoleToVisibilityConverter}, ConverterParameter=user}">
+                            <Label Text="{Binding Text}" TextColor="White" FontSize="14"/>
+                        </Border>
+
+                        <!-- アシスタント（左寄せ） -->
+                        <Border BackgroundColor="White"
+                                StrokeShape="RoundRectangle 18,18,18,4"
+                                Padding="14,8" MaximumWidthRequest="280"
+                                HorizontalOptions="Start"
+                                IsVisible="{Binding Role, Converter={StaticResource RoleToVisibilityConverter}, ConverterParameter=assistant}">
+                            <Label Text="{Binding Text}" TextColor="#1F2937" FontSize="14"/>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- 入力エリア -->
+        <Grid Grid.Row="2" BackgroundColor="White" Padding="12,8"
+              ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Entry Grid.Column="0" x:Name="InputEntry"
+                   Placeholder="メッセージを入力"
+                   ReturnCommand="{Binding SendCommand}"/>
+            <Button Grid.Column="1" Text="送信"
+                    BackgroundColor="#22C55E" TextColor="White"
+                    WidthRequest="70" Clicked="OnSendClicked"/>
+        </Grid>
+
+    </Grid>
+</ContentPage>

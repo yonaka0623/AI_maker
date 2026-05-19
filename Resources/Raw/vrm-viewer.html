@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: transparent;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/",
+    "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2/lib/three-vrm.module.js"
+  }
+}
+</script>
+    <script type="module">
+        import * as THREE from "three";
+        import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+        import { VRMLoaderPlugin, VRMExpressionPresetName } from "@pixiv/three-vrm";
+
+        // URLパラメータからmodelUrlを取得
+        // MAUIからは vrm-viewer.html?modelUrl=https://... で渡す
+        const params = new URLSearchParams(location.search);
+        const modelUrl = params.get("modelUrl");
+
+        const EMOTION_MAP = {
+            happy: VRMExpressionPresetName.Happy,
+            sad: VRMExpressionPresetName.Sad,
+            angry: VRMExpressionPresetName.Angry,
+            neutral: VRMExpressionPresetName.Neutral,
+        };
+
+        // --- renderer ---
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // --- scene ---
+        const scene = new THREE.Scene();
+
+        // --- camera ---
+        const camera = new THREE.PerspectiveCamera(
+            30,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            20
+        );
+        camera.position.set(0, 1.4, 3);
+
+        // --- ライト ---
+        const directional = new THREE.DirectionalLight(0xffffff, 1.0);
+        directional.position.set(1, 1, 1);
+        scene.add(directional);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+        // --- VRM読み込み ---
+        let vrm = null;
+
+        if (modelUrl) {
+            const loader = new GLTFLoader();
+            loader.register(parser => new VRMLoaderPlugin(parser));
+            loader.load(
+                modelUrl,
+                gltf => {
+                    vrm = gltf.userData.vrm;
+                    scene.add(vrm.scene);
+                    vrm.scene.rotation.y = Math.PI; // VRoidはZ軸が逆
+                },
+                undefined,
+                err => console.error("VRM load error:", err)
+            );
+        }
+
+        // --- アニメーションループ ---
+        const clock = new THREE.Clock();
+        (function animate() {
+            requestAnimationFrame(animate);
+            vrm?.update(clock.getDelta());
+            renderer.render(scene, camera);
+        })();
+
+        // --- MAUIから呼ばれる関数 ---
+        // MainPage.xaml.cs で EvaluateJavaScriptAsync("setEmotion('happy')") と呼ぶ
+        window.setEmotion = function (emotion) {
+            if (!vrm?.expressionManager) return;
+            Object.values(VRMExpressionPresetName).forEach(name => {
+                vrm.expressionManager.setValue(name, 0);
+            });
+            const name = EMOTION_MAP[emotion] ?? VRMExpressionPresetName.Neutral;
+            vrm.expressionManager.setValue(name, 1.0);
+        };
+
+        // リサイズ対応
+        window.addEventListener("resize", () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="AiCharacterMaker.Controls.FooterBar">
+
+    <Grid Padding="12,8" BackgroundColor="White" ColumnDefinitions="*,*,*,*"
+          ColumnSpacing="8">
+
+        <Button Grid.Column="0" Text="ホーム"
+                BackgroundColor="#D1D5DB"
+                Clicked="OnHomeTapped"/>
+
+        <Button Grid.Column="1" Text="チャット"
+                BackgroundColor="#22C55E" TextColor="White"
+                Clicked="OnChatTapped"/>
+
+        <Button Grid.Column="2" Text="キャラ一覧"
+                BackgroundColor="#FCA5A5"
+                Clicked="OnCharaListTapped"/>
+
+        <Button Grid.Column="3" Text="思い出"
+                BackgroundColor="#D1D5DB"
+                Clicked="OnMemoryTapped"/>
+
+    </Grid>
+</ContentView>

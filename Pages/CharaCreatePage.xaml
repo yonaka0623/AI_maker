@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="AiCharacterMaker.Pages.CharaCreatePage">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- ヘッダー -->
+        <Grid Grid.Row="0" BackgroundColor="White" Padding="16"
+              ColumnDefinitions="Auto,*">
+            <Button Grid.Column="0" Text="← キャラ一覧" TextColor="#3B82F6"
+                    BackgroundColor="Transparent" Clicked="OnBackClicked"/>
+            <Label Grid.Column="1" Text="キャラ作成" FontSize="20"
+                   FontAttributes="Bold" VerticalOptions="Center"/>
+        </Grid>
+
+        <!-- メイン -->
+        <ScrollView Grid.Row="1" Padding="16">
+            <VerticalStackLayout Spacing="20">
+
+                <!-- キャラの名前 -->
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="キャラの名前" FontAttributes="Bold" FontSize="14"/>
+                    <Entry x:Name="NameEntry" Placeholder="例：ミカ"/>
+                </VerticalStackLayout>
+
+                <!-- 性格の一言説明 -->
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="性格の一言説明" FontAttributes="Bold" FontSize="14"/>
+                    <Entry x:Name="ShortPersonalityEntry"
+                           Placeholder="例：明るく活発な女の子"/>
+                </VerticalStackLayout>
+
+                <!-- 性格（詳細） -->
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="性格" FontAttributes="Bold" FontSize="14"/>
+                    <Editor x:Name="PersonalityEditor"
+                            Placeholder="例：優しくて少し照れ屋。相手の話をよく聞いてくれる。"
+                            HeightRequest="120" AutoSize="Disabled"/>
+                </VerticalStackLayout>
+
+                <!-- 声 -->
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="声" FontAttributes="Bold" FontSize="14"/>
+                    <Picker x:Name="VoicePicker" Title="選択してください">
+                        <Picker.Items>
+                            <x:String>Mizuki（女性・日本語）</x:String>
+                            <x:String>Takumi（男性・日本語）</x:String>
+                            <x:String>Kazuha（女性・日本語）</x:String>
+                            <x:String>Tomoko（女性・日本語）</x:String>
+                        </Picker.Items>
+                    </Picker>
+                </VerticalStackLayout>
+
+                <!-- 容姿（アイコン） -->
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="容姿（アイコン）" FontAttributes="Bold" FontSize="14"/>
+                    <Button Text="画像を選択" BackgroundColor="#E5E7EB"
+                            TextColor="Black" Clicked="OnPickIconClicked"/>
+                    <Image x:Name="IconPreview" HeightRequest="80" WidthRequest="80"
+                           IsVisible="False" HorizontalOptions="Start"/>
+                    <Label Text="※ 今はアイコンのみ。3Dモデルは後で設定できます"
+                           FontSize="12" TextColor="Gray"/>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- 作成ボタン -->
+        <Button Grid.Row="2" x:Name="CreateButton" Text="作成"
+                BackgroundColor="#22C55E" TextColor="White"
+                FontSize="18" HeightRequest="52" Margin="16,8"
+                Clicked="OnCreateClicked"/>
+
+    </Grid>
+</ContentPage>
