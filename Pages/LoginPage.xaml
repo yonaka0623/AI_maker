@@ -1,72 +1,73 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="AiCharacterMaker.Pages.LoginPage">
+<ContentPage
+    x:Class="AICharacterMaker.Pages.LoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    BackgroundColor="#1E1E2E"
+    Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="*,Auto,*" Padding="32">
 
-        <!-- ヘッダー -->
-        <Grid Grid.Row="0" BackgroundColor="White" Padding="16"
-              ColumnDefinitions="Auto,*">
-            <Button Grid.Column="0" Text="← ホーム" TextColor="#3B82F6"
-                    BackgroundColor="Transparent" Clicked="OnHomeClicked"/>
-            <Label Grid.Column="1" Text="ログイン / 新規登録"
-                   FontSize="18" FontAttributes="Bold"
-                   HorizontalOptions="Center" VerticalOptions="Center"/>
-        </Grid>
+        <VerticalStackLayout
+            Grid.Row="1"
+            Spacing="16">
 
-        <!-- メイン -->
-        <ScrollView Grid.Row="1" BackgroundColor="White" Padding="24">
-            <VerticalStackLayout Spacing="0">
+            <Label
+                Text="AI Character Maker"
+                FontSize="28"
+                FontAttributes="Bold"
+                TextColor="White"
+                HorizontalOptions="Center"
+                Margin="0,0,0,24" />
 
-                <!-- ===== ログイン画面 ===== -->
-                <VerticalStackLayout x:Name="LoginArea">
-                    <Label Text="ログイン" FontSize="20" FontAttributes="Bold"
-                           Margin="0,0,0,16"/>
-                    <Entry x:Name="LoginEmailEntry" Placeholder="メールアドレス"
-                           Keyboard="Email" Margin="0,0,0,12"/>
-                    <Entry x:Name="LoginPasswordEntry" Placeholder="パスワード"
-                           IsPassword="True" Margin="0,0,0,16"/>
-                    <Button Text="ログイン" BackgroundColor="#3B82F6" TextColor="White"
-                            Clicked="OnLoginClicked" HeightRequest="50"/>
-                    <BoxView HeightRequest="1" Color="#E5E7EB" Margin="0,24"/>
-                    <Label Text="新規の方はこちら" TextColor="#3B82F6"
-                           TextDecorations="Underline" HorizontalOptions="Center">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnSwitchToRegisterTapped"/>
-                        </Label.GestureRecognizers>
-                    </Label>
-                </VerticalStackLayout>
+            <Entry
+                x:Name="EmailEntry"
+                Placeholder="メールアドレス"
+                Keyboard="Email"
+                BackgroundColor="#2A2A3E"
+                TextColor="White"
+                PlaceholderColor="#888"
+                Margin="0,4" />
 
-                <!-- ===== 新規登録画面 ===== -->
-                <VerticalStackLayout x:Name="RegisterArea" IsVisible="False">
-                    <Label Text="新規登録" FontSize="20" FontAttributes="Bold"
-                           Margin="0,0,0,16"/>
-                    <Entry x:Name="NicknameEntry" Placeholder="ニックネーム"
-                           Margin="0,0,0,12"/>
-                    <Entry x:Name="RegisterEmailEntry" Placeholder="メールアドレス"
-                           Keyboard="Email" Margin="0,0,0,12"/>
-                    <Entry x:Name="RegisterPasswordEntry" Placeholder="パスワード"
-                           IsPassword="True" Margin="0,0,0,12"/>
-                    <Entry x:Name="PasswordConfirmEntry" Placeholder="パスワード（確認）"
-                           IsPassword="True" Margin="0,0,0,16"/>
-                    <HorizontalStackLayout Spacing="8" Margin="0,0,0,16">
-                        <Label Text="利用規約" TextColor="#3B82F6" TextDecorations="Underline"/>
-                        <Label Text="・"/>
-                        <Label Text="プライバシーポリシー" TextColor="#3B82F6" TextDecorations="Underline"/>
-                    </HorizontalStackLayout>
-                    <Button Text="新規登録" BackgroundColor="#22C55E" TextColor="White"
-                            Clicked="OnRegisterClicked" HeightRequest="50"/>
-                    <BoxView HeightRequest="1" Color="#E5E7EB" Margin="0,24"/>
-                    <Label Text="ログインはこちら" TextColor="#3B82F6"
-                           TextDecorations="Underline" HorizontalOptions="Center">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnSwitchToLoginTapped"/>
-                        </Label.GestureRecognizers>
-                    </Label>
-                </VerticalStackLayout>
+            <Entry
+                x:Name="PasswordEntry"
+                Placeholder="パスワード"
+                IsPassword="True"
+                BackgroundColor="#2A2A3E"
+                TextColor="White"
+                PlaceholderColor="#888"
+                Margin="0,4" />
 
-            </VerticalStackLayout>
-        </ScrollView>
+            <Label
+                x:Name="ErrorLabel"
+                TextColor="#FF6B6B"
+                IsVisible="False"
+                HorizontalOptions="Center" />
+
+            <Button
+                Text="ログイン"
+                BackgroundColor="#7C3AED"
+                TextColor="White"
+                CornerRadius="8"
+                Margin="0,8,0,0"
+                Clicked="OnLoginClicked" />
+
+            <Button
+                Text="新規登録"
+                BackgroundColor="Transparent"
+                TextColor="#A78BFA"
+                BorderColor="#7C3AED"
+                BorderWidth="1"
+                CornerRadius="8"
+                Clicked="OnRegisterClicked" />
+
+            <ActivityIndicator
+                x:Name="LoadingIndicator"
+                IsRunning="False"
+                IsVisible="False"
+                Color="#7C3AED"
+                HorizontalOptions="Center" />
+
+        </VerticalStackLayout>
     </Grid>
 </ContentPage>

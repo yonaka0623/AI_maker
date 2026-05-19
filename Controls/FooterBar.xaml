@@ -1,26 +1,39 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="AiCharacterMaker.Controls.FooterBar">
+<ContentView
+    x:Class="AICharacterMaker.Controls.FooterBar"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <Grid Padding="12,8" BackgroundColor="White" ColumnDefinitions="*,*,*,*"
-          ColumnSpacing="8">
+    <Border
+        BackgroundColor="#1E1E2E"
+        StrokeThickness="0"
+        Padding="0,8">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="16,16,0,0" />
+        </Border.StrokeShape>
 
-        <Button Grid.Column="0" Text="ホーム"
-                BackgroundColor="#D1D5DB"
-                Clicked="OnHomeTapped"/>
+        <HorizontalStackLayout
+            HorizontalOptions="Center"
+            Spacing="40">
 
-        <Button Grid.Column="1" Text="チャット"
-                BackgroundColor="#22C55E" TextColor="White"
-                Clicked="OnChatTapped"/>
+            <Button
+                x:Name="CharaListButton"
+                Text="&#xE7EF;"
+                FontFamily="OpenSansRegular"
+                FontSize="24"
+                TextColor="White"
+                BackgroundColor="Transparent"
+                Clicked="OnCharaListClicked" />
 
-        <Button Grid.Column="2" Text="キャラ一覧"
-                BackgroundColor="#FCA5A5"
-                Clicked="OnCharaListTapped"/>
+            <Button
+                x:Name="CreateButton"
+                Text="&#xE710;"
+                FontFamily="OpenSansRegular"
+                FontSize="24"
+                TextColor="White"
+                BackgroundColor="Transparent"
+                Clicked="OnCreateClicked" />
 
-        <Button Grid.Column="3" Text="思い出"
-                BackgroundColor="#D1D5DB"
-                Clicked="OnMemoryTapped"/>
-
-    </Grid>
+        </HorizontalStackLayout>
+    </Border>
 </ContentView>

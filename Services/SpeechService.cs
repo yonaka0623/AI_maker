@@ -1,47 +1,34 @@
 using CommunityToolkit.Maui.Media;
+using System.Globalization;
 
-namespace AiCharacterMaker.Services;
-
-public class SpeechService
+namespace AICharacterMaker.Services
 {
-    readonly ISpeechToText _stt = SpeechToText.Default;
-    CancellationTokenSource? _cts;
-
-    // ===== 音声認識開始 =====
-    public async void StartListening(Action<string> onResult)
+    public class SpeechService
     {
-        try
+        private readonly ISpeechToText _stt;
+
+        public SpeechService(ISpeechToText stt)
         {
-            _cts = new CancellationTokenSource();
+            _stt = stt;
+        }
 
-            var result = await _stt.ListenAsync(
-                System.Globalization.CultureInfo.GetCultureInfo("ja-JP"),
-                new Progress<string>(partialText =>
-                {
-                    // 途中結果（表示用）
-                }),
-                _cts.Token
-            );
+        public async Task<string?> ListenAsync(CancellationToken cancellationToken = default)
+        {
+            var permission = await Permissions.RequestAsync<Permissions.Microphone>();
+            if (permission != PermissionStatus.Granted) return null;
 
-            if (result.IsSuccessful && !string.IsNullOrEmpty(result.Text))
+            try
             {
-                onResult(result.Text);
+                var result = await _stt.ListenAsync(
+                    CultureInfo.GetCultureInfo("ja-JP"),
+                    null,
+                    cancellationToken);
+                return result.IsSuccessful ? result.Text : null;
+            }
+            catch
+            {
+                return null;
             }
         }
-        catch (OperationCanceledException)
-        {
-            // StopListening() で止めた場合は正常
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"STT error: {ex.Message}");
-        }
-    }
-
-    // ===== 音声認識停止 =====
-    public void StopListening()
-    {
-        _cts?.Cancel();
-        _cts = null;
     }
 }

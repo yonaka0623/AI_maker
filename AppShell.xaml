@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-       xmlns:local="clr-namespace:AiCharacterMaker"
-       x:Class="AiCharacterMaker.AppShell">
+<Shell
+    x:Class="AICharacterMaker.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:pages="clr-namespace:AICharacterMaker.Pages">
+
+    <Shell.Resources>
+        <Style TargetType="Shell" ApplyToDerivedTypes="True">
+            <Setter Property="Shell.NavBarIsVisible" Value="False" />
+        </Style>
+    </Shell.Resources>
 
     <ShellContent
-        Title="AI Friends"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="main"/>
+        Route="LoginPage"
+        ContentTemplate="{DataTemplate pages:LoginPage}" />
 
 </Shell>

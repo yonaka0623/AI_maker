@@ -1,66 +1,59 @@
-using AiCharacterMaker.Services;
+using AICharacterMaker.Services;
 
-namespace AiCharacterMaker.Pages;
-
-public partial class LoginPage : ContentPage
+namespace AICharacterMaker.Pages
 {
-    readonly FirebaseAuthService _auth = new();
-
-    public LoginPage()
+    public partial class LoginPage : ContentPage
     {
-        InitializeComponent();
-    }
+        private readonly FirebaseAuthService _auth;
+        private readonly FirebaseService _firebase;
 
-    // ===== モード切り替え =====
-    void OnSwitchToRegisterTapped(object sender, TappedEventArgs e)
-    {
-        LoginArea.IsVisible = false;
-        RegisterArea.IsVisible = true;
-    }
-
-    void OnSwitchToLoginTapped(object sender, TappedEventArgs e)
-    {
-        RegisterArea.IsVisible = false;
-        LoginArea.IsVisible = true;
-    }
-
-    // ===== ホームへ戻る =====
-    async void OnHomeClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//main");
-    }
-
-    // ===== ログイン =====
-    async void OnLoginClicked(object sender, EventArgs e)
-    {
-        try
+        public LoginPage(FirebaseAuthService auth, FirebaseService firebase)
         {
-            await _auth.SignInAsync(LoginEmailEntry.Text, LoginPasswordEntry.Text);
-            await Shell.Current.GoToAsync("//main");
-        }
-        catch
-        {
-            await DisplayAlert("エラー", "ログインに失敗しました", "OK");
-        }
-    }
-
-    // ===== 新規登録 =====
-    async void OnRegisterClicked(object sender, EventArgs e)
-    {
-        if (RegisterPasswordEntry.Text != PasswordConfirmEntry.Text)
-        {
-            await DisplayAlert("エラー", "パスワードが一致しません", "OK");
-            return;
+            InitializeComponent();
+            _auth = auth;
+            _firebase = firebase;
         }
 
-        try
+        private async void OnLoginClicked(object sender, EventArgs e)
         {
-            await _auth.RegisterAsync(RegisterEmailEntry.Text, RegisterPasswordEntry.Text);
-            await Shell.Current.GoToAsync("//main");
+            await ExecuteAuthAsync(() => _auth.SignInAsync(EmailEntry.Text, PasswordEntry.Text));
         }
-        catch
+
+        private async void OnRegisterClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("エラー", "新規登録に失敗しました", "OK");
+            await ExecuteAuthAsync(() => _auth.RegisterAsync(EmailEntry.Text, PasswordEntry.Text));
+        }
+
+        private async Task ExecuteAuthAsync(Func<Task<bool>> authAction)
+        {
+            ErrorLabel.IsVisible = false;
+            LoadingIndicator.IsVisible = true;
+            LoadingIndicator.IsRunning = true;
+
+            try
+            {
+                var success = await authAction();
+                if (success)
+                {
+                    _firebase.SetAuthToken(_auth.IdToken);
+                    await Shell.Current.GoToAsync("//CharaListPage");
+                }
+                else
+                {
+                    ErrorLabel.Text = "認証に失敗しました。メールアドレスとパスワードを確認してください。";
+                    ErrorLabel.IsVisible = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorLabel.Text = $"エラー: {ex.Message}";
+                ErrorLabel.IsVisible = true;
+            }
+            finally
+            {
+                LoadingIndicator.IsRunning = false;
+                LoadingIndicator.IsVisible = false;
+            }
         }
     }
 }

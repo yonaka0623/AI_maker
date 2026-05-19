@@ -3,12 +3,16 @@
     x:Class="AICharacterMaker.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:AICharacterMaker"
-    Title="AICharacterMaker">
+    xmlns:pages="clr-namespace:AICharacterMaker.Pages">
+
+    <Shell.Resources>
+        <Style TargetType="Shell" ApplyToDerivedTypes="True">
+            <Setter Property="Shell.NavBarIsVisible" Value="False" />
+        </Style>
+    </Shell.Resources>
 
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Route="LoginPage"
+        ContentTemplate="{DataTemplate pages:LoginPage}" />
 
 </Shell>

@@ -1,106 +1,104 @@
-using AiCharacterMaker.Services;
+using AICharacterMaker.Models;
+using AICharacterMaker.Services;
 
-namespace AiCharacterMaker.Pages;
-
-public partial class CharaCreatePage : ContentPage
+namespace AICharacterMaker.Pages
 {
-    readonly FirebaseService _firebase = new();
-    string? _iconLocalPath; // 選択した画像のローカルパス
-
-    // voiceIdに変換する対応表
-    readonly Dictionary<int, string> _voiceIdMap = new()
+    public partial class CharaCreatePage : ContentPage
     {
-        { 0, "Mizuki" },
-        { 1, "Takumi" },
-        { 2, "Kazuha" },
-        { 3, "Tomoko" },
-    };
+        private readonly FirebaseAuthService _auth;
+        private readonly FirebaseService _firebase;
+        private string? _vrmUrl;
 
-    public CharaCreatePage()
-    {
-        InitializeComponent();
-    }
-
-    // ===== 戻るボタン =====
-    async void OnBackClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//charaList");
-    }
-
-    // ===== アイコン画像選択 =====
-    async void OnPickIconClicked(object sender, EventArgs e)
-    {
-        var result = await FilePicker.PickAsync(new PickOptions
+        public CharaCreatePage(FirebaseAuthService auth, FirebaseService firebase)
         {
-            FileTypes = FilePickerFileType.Images,
-            PickerTitle = "アイコン画像を選択"
-        });
-
-        if (result == null) return;
-
-        _iconLocalPath = result.FullPath;
-        IconPreview.Source = ImageSource.FromFile(_iconLocalPath);
-        IconPreview.IsVisible = true;
-    }
-
-    // ===== 作成ボタン =====
-    async void OnCreateClicked(object sender, EventArgs e)
-    {
-        var name = NameEntry.Text?.Trim() ?? "";
-        var shortPersonality = ShortPersonalityEntry.Text?.Trim() ?? "";
-        var personality = PersonalityEditor.Text?.Trim() ?? "";
-        var voiceIndex = VoicePicker.SelectedIndex;
-
-        // バリデーション（TSの disabled 相当）
-        if (string.IsNullOrEmpty(name) ||
-            string.IsNullOrEmpty(shortPersonality) ||
-            string.IsNullOrEmpty(personality) ||
-            voiceIndex < 0)
-        {
-            await DisplayAlert("入力エラー", "すべての項目を入力してください", "OK");
-            return;
+            InitializeComponent();
+            _auth = auth;
+            _firebase = firebase;
+            VoicePicker.SelectedIndex = 0;
         }
 
-        var uid = await _firebase.GetCurrentUidAsync();
-        if (uid == null)
+        private async void OnSelectVrmClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("エラー", "ログインしてください", "OK");
-            return;
-        }
-
-        var voiceId = _voiceIdMap[voiceIndex];
-
-        try
-        {
-            CreateButton.IsEnabled = false;
-            CreateButton.Text = "作成中…";
-
-            // アイコンをStorageにアップロード（任意）
-            string? iconUrl = null;
-            if (_iconLocalPath != null)
-                iconUrl = await _firebase.UploadIconAsync(uid, _iconLocalPath);
-
-            // Firestoreにキャラを保存
-            await _firebase.CreateCharacterAsync(new()
+            try
             {
-                ["name"] = name,
-                ["personality"] = personality,
-                ["shortPersonality"] = shortPersonality,
-                ["voiceId"] = voiceId,
-                ["iconUrl"] = iconUrl,
-                ["creator"] = uid,
-            });
+                var result = await FilePicker.PickAsync(new PickOptions
+                {
+                    PickerTitle = "VRMファイルを選択",
+                    FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                    {
+                        [DevicePlatform.Android] = ["application/octet-stream"],
+                        [DevicePlatform.iOS] = ["public.data"],
+                        [DevicePlatform.WinUI] = [".vrm"]
+                    })
+                });
 
-            await Shell.Current.GoToAsync("//charaList");
+                if (result == null) return;
+
+                UploadIndicator.IsVisible = true;
+                UploadIndicator.IsRunning = true;
+                VrmFileLabel.Text = $"アップロード中: {result.FileName}";
+
+                using var stream = await result.OpenReadAsync();
+                _vrmUrl = await _firebase.UploadVrmAsync(
+                    _auth.UserId ?? "unknown",
+                    result.FileName,
+                    stream);
+
+                VrmFileLabel.Text = _vrmUrl != null
+                    ? $"✓ {result.FileName}"
+                    : "アップロードに失敗しました";
+            }
+            catch (Exception ex)
+            {
+                VrmFileLabel.Text = $"エラー: {ex.Message}";
+            }
+            finally
+            {
+                UploadIndicator.IsRunning = false;
+                UploadIndicator.IsVisible = false;
+            }
         }
-        catch (Exception ex)
+
+        private async void OnSaveClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("エラー", $"キャラの作成に失敗しました: {ex.Message}", "OK");
+            ErrorLabel.IsVisible = false;
+
+            if (string.IsNullOrWhiteSpace(NameEntry.Text))
+            {
+                ErrorLabel.Text = "キャラクター名を入力してください";
+                ErrorLabel.IsVisible = true;
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(PersonalityEditor.Text))
+            {
+                ErrorLabel.Text = "性格・設定を入力してください";
+                ErrorLabel.IsVisible = true;
+                return;
+            }
+
+            var character = new Character
+            {
+                Name = NameEntry.Text.Trim(),
+                Personality = PersonalityEditor.Text.Trim(),
+                VrmUrl = _vrmUrl ?? string.Empty,
+                TtsVoice = VoicePicker.SelectedItem?.ToString() ?? "Mizuki",
+                UserId = _auth.UserId ?? string.Empty
+            };
+
+            var id = await _firebase.CreateCharacterAsync(character);
+            if (id == null)
+            {
+                ErrorLabel.Text = "保存に失敗しました";
+                ErrorLabel.IsVisible = true;
+                return;
+            }
+
+            await Shell.Current.GoToAsync("..");
         }
-        finally
+
+        private async void OnBackClicked(object sender, EventArgs e)
         {
-            CreateButton.IsEnabled = true;
-            CreateButton.Text = "作成";
+            await Shell.Current.GoToAsync("..");
         }
     }
 }

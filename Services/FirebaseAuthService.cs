@@ -1,73 +1,52 @@
-using System.Text;
+using System.Net.Http.Json;
 using System.Text.Json;
 
-namespace AiCharacterMaker.Services;
-
-public class FirebaseAuthService
+namespace AICharacterMaker.Services
 {
-    const string ApiKey = "YOUR_FIREBASE_API_KEY"; // Firebaseコンソールのウェブ設定から取得
-    readonly HttpClient _http = new();
-
-    // ===== ログイン =====
-    public async Task SignInAsync(string email, string password)
+    public class FirebaseAuthService
     {
-        var url = $"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={ApiKey}";
-        var body = JsonSerializer.Serialize(new
+        private readonly HttpClient _http = new();
+        private readonly string _apiKey;
+
+        public string? IdToken { get; private set; }
+        public string? UserId { get; private set; }
+        public bool IsSignedIn => IdToken != null;
+
+        public FirebaseAuthService(string apiKey)
         {
-            email,
-            password,
-            returnSecureToken = true
-        });
+            _apiKey = apiKey;
+        }
 
-        var res = await _http.PostAsync(url,
-            new StringContent(body, Encoding.UTF8, "application/json"));
-
-        if (!res.IsSuccessStatusCode)
-            throw new Exception("ログインに失敗しました");
-
-        var json = await res.Content.ReadAsStringAsync();
-        var data = JsonSerializer.Deserialize<JsonElement>(json);
-
-        // idTokenとuidを保存
-        var idToken = data.GetProperty("idToken").GetString()!;
-        var uid = data.GetProperty("localId").GetString()!;
-
-        await SecureStorage.SetAsync("firebase_id_token", idToken);
-        await SecureStorage.SetAsync("firebase_uid", uid);
-    }
-
-    // ===== 新規登録 =====
-    public async Task RegisterAsync(string email, string password)
-    {
-        var url = $"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={ApiKey}";
-        var body = JsonSerializer.Serialize(new
+        public async Task<bool> SignInAsync(string email, string password)
         {
-            email,
-            password,
-            returnSecureToken = true
-        });
+            var url = $"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={_apiKey}";
+            var payload = new { email, password, returnSecureToken = true };
+            var response = await _http.PostAsJsonAsync(url, payload);
+            if (!response.IsSuccessStatusCode) return false;
 
-        var res = await _http.PostAsync(url,
-            new StringContent(body, Encoding.UTF8, "application/json"));
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            IdToken = json.GetProperty("idToken").GetString();
+            UserId = json.GetProperty("localId").GetString();
+            return true;
+        }
 
-        if (!res.IsSuccessStatusCode)
-            throw new Exception("新規登録に失敗しました");
+        public async Task<bool> RegisterAsync(string email, string password)
+        {
+            var url = $"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={_apiKey}";
+            var payload = new { email, password, returnSecureToken = true };
+            var response = await _http.PostAsJsonAsync(url, payload);
+            if (!response.IsSuccessStatusCode) return false;
 
-        var json = await res.Content.ReadAsStringAsync();
-        var data = JsonSerializer.Deserialize<JsonElement>(json);
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            IdToken = json.GetProperty("idToken").GetString();
+            UserId = json.GetProperty("localId").GetString();
+            return true;
+        }
 
-        var idToken = data.GetProperty("idToken").GetString()!;
-        var uid = data.GetProperty("localId").GetString()!;
-
-        await SecureStorage.SetAsync("firebase_id_token", idToken);
-        await SecureStorage.SetAsync("firebase_uid", uid);
-    }
-
-    // ===== ログアウト =====
-    public Task SignOutAsync()
-    {
-        SecureStorage.Remove("firebase_id_token");
-        SecureStorage.Remove("firebase_uid");
-        return Task.CompletedTask;
+        public void SignOut()
+        {
+            IdToken = null;
+            UserId = null;
+        }
     }
 }

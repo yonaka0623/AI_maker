@@ -1,81 +1,99 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:models="clr-namespace:AiCharacterMaker.Models"
-             xmlns:controls="clr-namespace:AiCharacterMaker.Controls"
-             x:Class="AiCharacterMaker.Pages.CharaListPage">
+<ContentPage
+    x:Class="AICharacterMaker.Pages.CharaListPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:AICharacterMaker.Controls"
+    xmlns:models="clr-namespace:AICharacterMaker.Models"
+    BackgroundColor="#1E1E2E"
+    Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="Auto,*,Auto,Auto">
+    <Grid RowDefinitions="Auto,*,Auto">
 
-        <!-- ヘッダー -->
-        <VerticalStackLayout Grid.Row="0" BackgroundColor="White" Padding="16">
-            <Label Text="キャラ一覧" FontSize="20" FontAttributes="Bold"
-                   HorizontalOptions="Center"/>
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="20,16">
+            <Label
+                Text="キャラクター一覧"
+                FontSize="22"
+                FontAttributes="Bold"
+                TextColor="White"
+                VerticalOptions="Center" />
+            <Button
+                Grid.Column="1"
+                Text="ログアウト"
+                FontSize="12"
+                TextColor="#A78BFA"
+                BackgroundColor="Transparent"
+                Clicked="OnLogoutClicked" />
+        </Grid>
 
-            <!-- 並び替えボタン -->
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,12,0,0">
-                <Button Grid.Column="0" x:Name="SortDescButton" Text="新しい順"
-                        Clicked="OnSortDescClicked"/>
-                <Button Grid.Column="1" x:Name="SortAscButton" Text="古い順"
-                        BackgroundColor="#E5E7EB" TextColor="Black"
-                        Clicked="OnSortAscClicked"/>
-            </Grid>
-        </VerticalStackLayout>
+        <!-- Character List -->
+        <CollectionView
+            Grid.Row="1"
+            x:Name="CharaCollection"
+            Margin="16,0"
+            SelectionMode="None">
 
-        <!-- キャラ一覧 -->
-        <CollectionView Grid.Row="1" x:Name="CharaListView" Margin="16,8">
             <CollectionView.EmptyView>
-                <Label Text="まだキャラが作成されていません"
-                       TextColor="Gray" HorizontalOptions="Center"
-                       Margin="0,32,0,0"/>
+                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8">
+                    <Label Text="キャラクターがいません" TextColor="#888" FontSize="16" />
+                    <Label Text="＋ボタンで追加してください" TextColor="#666" FontSize="13" />
+                </VerticalStackLayout>
             </CollectionView.EmptyView>
+
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:Character">
-                    <Border x:Name="CharaCard" Margin="0,0,0,12" Padding="12"
-                            BackgroundColor="White" StrokeShape="RoundRectangle 10">
-                        <Grid ColumnDefinitions="56,*,Auto" ColumnSpacing="12">
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems>
+                                <SwipeItem
+                                    Text="削除"
+                                    BackgroundColor="#DC2626"
+                                    Invoked="OnDeleteSwipeInvoked" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
 
-                            <!-- アイコン -->
-                            <Border Grid.Column="0" WidthRequest="56" HeightRequest="56"
-                                    StrokeShape="RoundRectangle 28" BackgroundColor="#D1D5DB">
-                                <Image Source="{Binding IconUrl}" Aspect="AspectFill"
-                                       IsVisible="{Binding IconUrl, Converter={StaticResource NotNullConverter}}"/>
-                                <Label Text="NO IMAGE" FontSize="9" TextColor="Gray"
-                                       HorizontalOptions="Center" VerticalOptions="Center"
-                                       IsVisible="{Binding IconUrl, Converter={StaticResource NullConverter}}"/>
-                            </Border>
+                        <Border
+                            BackgroundColor="#2A2A3E"
+                            Stroke="#3D3D5C"
+                            StrokeThickness="1"
+                            Margin="0,6"
+                            Padding="16">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
 
-                            <!-- 名前・性格 -->
-                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16"/>
-                                <Label Text="{Binding ShortPersonality}"
-                                       TextColor="#4B5563" FontSize="13"/>
-                            </VerticalStackLayout>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label
+                                        Text="{Binding Name}"
+                                        FontSize="18"
+                                        FontAttributes="Bold"
+                                        TextColor="White" />
+                                    <Label
+                                        Text="{Binding Personality}"
+                                        FontSize="13"
+                                        TextColor="#AAA"
+                                        LineBreakMode="TailTruncation"
+                                        MaxLines="2" />
+                                </VerticalStackLayout>
 
-                            <!-- 編集ボタン -->
-                            <Button Grid.Column="2" Text="編集"
-                                    BackgroundColor="#E5E7EB" TextColor="Black"
-                                    FontSize="12" Padding="8,4"
-                                    CommandParameter="{Binding Id}"
-                                    Clicked="OnEditClicked"/>
-                        </Grid>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer CommandParameter="{Binding Id}"
-                                                  Tapped="OnCharaTapped"/>
-                        </Border.GestureRecognizers>
-                    </Border>
+                                <Button
+                                    Grid.Column="1"
+                                    Text="▶"
+                                    FontSize="20"
+                                    TextColor="#7C3AED"
+                                    BackgroundColor="Transparent"
+                                    CommandParameter="{Binding .}"
+                                    Clicked="OnStartChatClicked" />
+                            </Grid>
+                        </Border>
+                    </SwipeView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- 作成ボタン -->
-        <Button Grid.Row="2" Text="＋ 新しいキャラを作成"
-                BackgroundColor="#22C55E" TextColor="White"
-                FontSize="18" HeightRequest="52" Margin="16,0"
-                Clicked="OnCreateClicked"/>
-
-        <!-- フッター -->
-        <controls:FooterBar Grid.Row="3" x:Name="Footer"/>
-
+        <!-- Footer -->
+        <controls:FooterBar Grid.Row="2" />
     </Grid>
 </ContentPage>

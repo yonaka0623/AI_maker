@@ -1,8 +1,12 @@
-namespace AiCharacterMaker.Models;
-
-public class Message
+namespace AICharacterMaker.Models
 {
-    public string Id { get; set; } = "";
-    public string Role { get; set; } = "user"; // "user" or "assistant"
-    public string Text { get; set; } = "";
+    public class Message
+    {
+        public string Id { get; set; } = string.Empty;
+        public string CharacterId { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+        public string Emotion { get; set; } = "neutral";
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    }
 }

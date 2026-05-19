@@ -1,123 +1,204 @@
-using AiCharacterMaker.Models;
-using AiCharacterMaker.Services;
-using System.Collections.ObjectModel;
+using AICharacterMaker.Models;
+using AICharacterMaker.Services;
+using Plugin.Maui.Audio;
+using System.Globalization;
 
-namespace AiCharacterMaker.Pages;
-
-public partial class ChatPage : ContentPage
+namespace AICharacterMaker.Pages
 {
-    string? _characterId;
-    string? _threadId;
-    dynamic? _character;
-
-    readonly FirebaseService _firebase = new();
-    readonly ObservableCollection<Message> _messages = new();
-
-    // メッセージ一覧を定期更新するタイマー
-    // （TSの onSnapshot 相当）
-    IDispatcherTimer? _pollTimer;
-
-    public ChatPage()
+    // Value converters for message bubbles
+    public class RoleToAlignmentConverter : IValueConverter
     {
-        InitializeComponent();
-        MessagesView.ItemsSource = _messages;
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => value is string role && role == "user" ? LayoutOptions.End : LayoutOptions.Start;
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => throw new NotImplementedException();
     }
 
-    // ===== クエリパラメータ受け取り =====
-    protected override async void OnAppearing()
+    public class RoleToColorConverter : IValueConverter
     {
-        base.OnAppearing();
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => value is string role && role == "user" ? Color.FromArgb("#7C3AED") : Color.FromArgb("#374151");
 
-        // Shell のクエリパラメータから characterId を取得
-        if (Shell.Current.CurrentState.Location.ToString().Contains("characterId="))
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
+    [QueryProperty(nameof(Character), "Character")]
+    public partial class ChatPage : ContentPage
+    {
+        private readonly FirebaseService _firebase;
+        private readonly ChatService _chat;
+        private readonly PollyService _polly;
+        private readonly SpeechService _speech;
+        private readonly IAudioManager _audioManager;
+
+        private Character? _character;
+        private List<Message> _messages = [];
+        private CancellationTokenSource? _micCts;
+        private bool _isProcessing;
+
+        public Character? Character
         {
-            var uri = Shell.Current.CurrentState.Location.ToString();
-            _characterId = System.Web.HttpUtility.ParseQueryString(
-                new Uri("http://x" + uri.Substring(uri.IndexOf('?'))).Query
-            )["characterId"];
+            get => _character;
+            set
+            {
+                _character = value;
+                if (_character != null)
+                    OnCharacterSet();
+            }
         }
 
-        if (_characterId == null) return;
-
-        // キャラ情報取得
-        _character = await _firebase.GetCharacterAsync(_characterId);
-        CharaNameLabel.Text = _character?.Name ?? "不明";
-
-        // threadId
-        var uid = await _firebase.GetCurrentUidAsync();
-        if (uid == null) return;
-        _threadId = $"{uid}_{_characterId}";
-
-        // メッセージ取得 & 定期ポーリング開始
-        await LoadMessagesAsync();
-        StartPolling();
-    }
-
-    protected override void OnDisappearing()
-    {
-        base.OnDisappearing();
-        _pollTimer?.Stop();
-    }
-
-    // ===== メッセージ取得 =====
-    // onSnapshot の代わりに3秒ごとにFetch
-    async Task LoadMessagesAsync()
-    {
-        if (_threadId == null) return;
-
-        var fetched = await _firebase.GetMessagesAsync(_threadId);
-
-        MainThread.BeginInvokeOnMainThread(() =>
+        public ChatPage(
+            FirebaseService firebase,
+            ChatService chat,
+            PollyService polly,
+            SpeechService speech,
+            IAudioManager audioManager)
         {
-            _messages.Clear();
-            foreach (var m in fetched) _messages.Add(m);
+            InitializeComponent();
+            _firebase = firebase;
+            _chat = chat;
+            _polly = polly;
+            _speech = speech;
+            _audioManager = audioManager;
+        }
 
-            // 最下部にスクロール
-            if (_messages.Count > 0)
-                MessagesView.ScrollTo(_messages[^1], ScrollToPosition.End, false);
-        });
-    }
+        private void OnCharacterSet()
+        {
+            if (_character == null) return;
+            CharaNameLabel.Text = _character.Name;
+        }
 
-    void StartPolling()
-    {
-        _pollTimer = Dispatcher.CreateTimer();
-        _pollTimer.Interval = TimeSpan.FromSeconds(3);
-        _pollTimer.Tick += async (s, e) => await LoadMessagesAsync();
-        _pollTimer.Start();
-    }
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            if (_character == null) return;
 
-    // ===== 戻るボタン =====
-    async void OnBackClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//charaList");
-    }
+            VrmWebView.Source = new HtmlWebViewSource
+            {
+                Html = await LoadVrmHtmlAsync()
+            };
 
-    // ===== 送信 =====
-    async void OnSendClicked(object sender, EventArgs e)
-    {
-        var text = InputEntry.Text?.Trim();
-        if (string.IsNullOrEmpty(text) || _threadId == null || _character == null) return;
+            _messages = await _firebase.GetMessagesAsync(_character.Id);
+            RefreshMessageList();
+        }
 
-        InputEntry.Text = "";
+        private static async Task<string> LoadVrmHtmlAsync()
+        {
+            using var stream = await FileSystem.OpenAppPackageFileAsync("vrm-viewer.html");
+            using var reader = new StreamReader(stream);
+            return await reader.ReadToEndAsync();
+        }
 
-        // Firestoreに保存
-        await _firebase.SaveThreadAsync(_threadId, "", _characterId!);
-        await _firebase.AddMessageAsync(_threadId, "user", text);
+        private void OnWebViewNavigating(object sender, WebNavigatingEventArgs e)
+        {
+            if (!e.Url.StartsWith("app://callback")) return;
+            e.Cancel = true;
 
-        // GPT API呼び出し
-        var result = await ChatService.SendAsync(
-            _characterId!,
-            _character.Personality,
-            text,
-            _threadId
-        );
+            var message = Uri.UnescapeDataString(e.Url.Replace("app://callback?", ""));
+            if (message == "vrm_loaded" && _character != null)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                    VrmWebView.EvaluateJavaScriptAsync($"loadVRM('{_character.VrmUrl}')"));
+            }
+        }
 
-        if (result == null) return;
+        private async void OnSendClicked(object sender, EventArgs e)
+        {
+            var text = TextInput.Text?.Trim();
+            if (string.IsNullOrEmpty(text) || _isProcessing) return;
+            TextInput.Text = string.Empty;
+            await ProcessUserInputAsync(text);
+        }
 
-        // アシスタントの返答を保存
-        await _firebase.AddMessageAsync(_threadId, "assistant", result.Text);
+        private async void OnMicClicked(object sender, EventArgs e)
+        {
+            if (_isProcessing) return;
 
-        // メッセージ更新
-        await LoadMessagesAsync();
+            MicButton.Text = "⏹";
+            _micCts = new CancellationTokenSource();
+
+            try
+            {
+                var text = await _speech.ListenAsync(_micCts.Token);
+                if (!string.IsNullOrEmpty(text))
+                    await ProcessUserInputAsync(text);
+            }
+            finally
+            {
+                MicButton.Text = "🎤";
+                _micCts?.Dispose();
+                _micCts = null;
+            }
+        }
+
+        private async Task ProcessUserInputAsync(string userText)
+        {
+            if (_character == null || _isProcessing) return;
+            _isProcessing = true;
+
+            var userMsg = new Message
+            {
+                CharacterId = _character.Id,
+                Role = "user",
+                Text = userText,
+                Timestamp = DateTime.UtcNow
+            };
+            _messages.Add(userMsg);
+            RefreshMessageList();
+            await _firebase.SaveMessageAsync(userMsg);
+
+            try
+            {
+                var result = await _chat.SendMessageAsync(_character, _messages, userText);
+                if (result == null) return;
+
+                var (emotion, replyText) = result.Value;
+
+                await VrmWebView.EvaluateJavaScriptAsync($"setExpression('{emotion}')");
+
+                var assistantMsg = new Message
+                {
+                    CharacterId = _character.Id,
+                    Role = "assistant",
+                    Text = replyText,
+                    Emotion = emotion,
+                    Timestamp = DateTime.UtcNow
+                };
+                _messages.Add(assistantMsg);
+                RefreshMessageList();
+                await _firebase.SaveMessageAsync(assistantMsg);
+
+                await PlaySpeechAsync(replyText);
+            }
+            finally
+            {
+                _isProcessing = false;
+            }
+        }
+
+        private async Task PlaySpeechAsync(string text)
+        {
+            if (_character == null) return;
+            var audioBytes = await _polly.SynthesizeSpeechAsync(text, _character.TtsVoice);
+            if (audioBytes == null) return;
+
+            var stream = new MemoryStream(audioBytes);
+            var player = _audioManager.CreatePlayer(stream);
+            player.Play();
+        }
+
+        private void RefreshMessageList()
+        {
+            MessageCollection.ItemsSource = null;
+            MessageCollection.ItemsSource = _messages;
+            MessageCollection.ScrollTo(_messages.Count - 1, animate: false);
+        }
+
+        private async void OnBackClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("..");
+        }
     }
 }

@@ -1,68 +1,64 @@
-using System.Text;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
+using AICharacterMaker.Models;
 
-namespace AiCharacterMaker.Services;
-
-public class ChatResponse
+namespace AICharacterMaker.Services
 {
-    public string Text { get; set; } = "";
-    public string Emotion { get; set; } = "neutral";
-}
-
-public class ChatService
-{
-    static readonly HttpClient _http = new();
-
-    public static async Task<ChatResponse?> SendAsync(
-        string characterId,
-        string personality,
-        string userText,
-        string threadId)
+    public class ChatService
     {
-        var apiKey = await SecureStorage.GetAsync("openai_api_key");
-        if (string.IsNullOrEmpty(apiKey)) return null;
+        private readonly HttpClient _http;
+        private readonly string _model;
 
-        var systemPrompt = string.IsNullOrEmpty(personality)
-            ? "あなたは親切なAIキャラクターです。\n\n返答は必ず以下のJSON形式で返してください。\n{\"emotion\":\"happy|sad|angry|neutral\",\"text\":\"セリフ\"}"
-            : $"あなたは次のキャラクターとして自然に会話してください。\n\n{personality}\n\n返答は必ず以下のJSON形式で返してください。\n{{\"emotion\":\"happy|sad|angry|neutral\",\"text\":\"セリフ\"}}";
-
-        var body = JsonSerializer.Serialize(new
+        public ChatService(string apiKey, string model = "gpt-4o-mini")
         {
-            model = "gpt-4o-mini",
-            response_format = new { type = "json_object" },
-            messages = new[]
+            _model = model;
+            _http = new HttpClient();
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", apiKey);
+        }
+
+        public async Task<(string emotion, string text)?> SendMessageAsync(
+            Character character,
+            List<Message> history,
+            string userMessage)
+        {
+            var systemPrompt = $"""
+                あなたは「{character.Name}」というキャラクターです。
+                性格: {character.Personality}
+
+                ユーザーと会話してください。返答は必ず以下のJSON形式のみで返してください:
+                {{"emotion": "happy|sad|angry|surprised|neutral|relaxed", "text": "返答テキスト"}}
+                """;
+
+            var messages = new List<object> { new { role = "system", content = systemPrompt } };
+            foreach (var msg in history.TakeLast(20))
+                messages.Add(new { role = msg.Role, content = msg.Text });
+            messages.Add(new { role = "user", content = userMessage });
+
+            var payload = new
             {
-                new { role = "system", content = systemPrompt },
-                new { role = "user",   content = userText }
-            }
-        });
+                model = _model,
+                messages,
+                response_format = new { type = "json_object" },
+                max_tokens = 500
+            };
 
-        var req = new HttpRequestMessage(HttpMethod.Post,
-            "https://api.openai.com/v1/chat/completions")
-        {
-            Content = new StringContent(body, Encoding.UTF8, "application/json")
-        };
-        req.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+            var response = await _http.PostAsJsonAsync("https://api.openai.com/v1/chat/completions", payload);
+            if (!response.IsSuccessStatusCode) return null;
 
-        var res = await _http.SendAsync(req);
-        if (!res.IsSuccessStatusCode) return null;
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            var content = json
+                .GetProperty("choices")[0]
+                .GetProperty("message")
+                .GetProperty("content")
+                .GetString() ?? "{}";
 
-        var json = await res.Content.ReadAsStringAsync();
-        var root = JsonSerializer.Deserialize<JsonElement>(json);
+            var result = JsonSerializer.Deserialize<JsonElement>(content);
+            var emotion = result.TryGetProperty("emotion", out var e) ? e.GetString() ?? "neutral" : "neutral";
+            var text = result.TryGetProperty("text", out var t) ? t.GetString() ?? string.Empty : string.Empty;
 
-        var content = root
-            .GetProperty("choices")[0]
-            .GetProperty("message")
-            .GetProperty("content")
-            .GetString() ?? "{}";
-
-        var parsed = JsonSerializer.Deserialize<JsonElement>(content);
-
-        return new ChatResponse
-        {
-            Text    = parsed.GetProperty("text").GetString() ?? "",
-            Emotion = parsed.GetProperty("emotion").GetString() ?? "neutral",
-        };
+            return (emotion, text);
+        }
     }
 }

@@ -1,39 +1,20 @@
-namespace AiCharacterMaker.Controls;
-
-public partial class FooterBar : ContentView
+namespace AICharacterMaker.Controls
 {
-    // characterId を外から受け取るプロパティ
-    // （TSの props に相当）
-    public string? CharacterId { get; set; }
-
-    public FooterBar()
+    public partial class FooterBar : ContentView
     {
-        InitializeComponent();
-    }
+        public FooterBar()
+        {
+            InitializeComponent();
+        }
 
-    async void OnHomeTapped(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//main");
-    }
+        private async void OnCharaListClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("//CharaListPage");
+        }
 
-    async void OnChatTapped(object sender, EventArgs e)
-    {
-        var route = CharacterId != null
-            ? $"//chat?characterId={CharacterId}"
-            : "//chat";
-        await Shell.Current.GoToAsync(route);
-    }
-
-    async void OnCharaListTapped(object sender, EventArgs e)
-    {
-        var route = CharacterId != null
-            ? $"//charaList?characterId={CharacterId}"
-            : "//charaList";
-        await Shell.Current.GoToAsync(route);
-    }
-
-    async void OnMemoryTapped(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//memory");
+        private async void OnCreateClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("CharaCreatePage");
+        }
     }
 }

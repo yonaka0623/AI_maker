@@ -1,338 +1,193 @@
-using AiCharacterMaker.Models;
-using System.Text;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
+using AICharacterMaker.Models;
 
-namespace AiCharacterMaker.Services;
-
-public class FirebaseService
+namespace AICharacterMaker.Services
 {
-    const string ProjectId = "YOUR_FIREBASE_PROJECT_ID"; // Firebaseコンソールから取得
-    const string BaseUrl = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents";
-
-    readonly HttpClient _http = new();
-
-    // ===== 認証トークン取得 =====
-    async Task<string?> GetTokenAsync()
-        => await SecureStorage.GetAsync("firebase_id_token");
-
-    // ===== 現在のUID取得 =====
-    public async Task<string?> GetCurrentUidAsync()
-        => await SecureStorage.GetAsync("firebase_uid");
-
-    // ===== ログアウト =====
-    public Task SignOutAsync()
+    public class FirebaseService
     {
-        SecureStorage.Remove("firebase_id_token");
-        SecureStorage.Remove("firebase_uid");
-        return Task.CompletedTask;
-    }
+        private readonly HttpClient _http = new();
+        private readonly string _projectId;
+        private readonly string _storageBucket;
+        private readonly string _baseUrl;
 
-    // ===== Firestoreからドキュメント取得（共通） =====
-    async Task<JsonElement?> GetDocumentAsync(string path)
-    {
-        var token = await GetTokenAsync();
-        if (token == null) return null;
-
-        var req = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/{path}");
-        req.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var res = await _http.SendAsync(req);
-        if (!res.IsSuccessStatusCode) return null;
-
-        var json = await res.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<JsonElement>(json);
-    }
-
-    // ===== selectedCharacterId取得 =====
-    public async Task<string?> GetSelectedCharacterIdAsync(string uid)
-    {
-        var doc = await GetDocumentAsync($"users/{uid}");
-        if (doc == null) return null;
-
-        try
+        public FirebaseService(string projectId, string storageBucket)
         {
-            return doc.Value
-                .GetProperty("fields")
-                .GetProperty("selectedCharacterId")
-                .GetProperty("stringValue")
-                .GetString();
+            _projectId = projectId;
+            _storageBucket = storageBucket;
+            _baseUrl = $"https://firestore.googleapis.com/v1/projects/{projectId}/databases/(default)/documents";
         }
-        catch { return null; }
-    }
 
-    // ===== selectedCharacterId保存 =====
-    public async Task SetSelectedCharacterAsync(string uid, string characterId)
-    {
-        var token = await GetTokenAsync();
-        if (token == null) return;
-
-        var url = $"{BaseUrl}/users/{uid}?updateMask.fieldPaths=selectedCharacterId";
-        var body = JsonSerializer.Serialize(new
+        public void SetAuthToken(string? idToken)
         {
-            fields = new
-            {
-                selectedCharacterId = new { stringValue = characterId }
-            }
-        });
-
-        var req = new HttpRequestMessage(HttpMethod.Patch, url)
-        {
-            Content = new StringContent(body, Encoding.UTF8, "application/json")
-        };
-        req.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        await _http.SendAsync(req);
-    }
-
-    // ===== キャラ1件取得 =====
-    public async Task<Character?> GetCharacterAsync(string characterId)
-    {
-        var doc = await GetDocumentAsync($"characters/{characterId}");
-        if (doc == null) return null;
-
-        try
-        {
-            var fields = doc.Value.GetProperty("fields");
-            return new Character
-            {
-                Id             = characterId,
-                Name           = GetString(fields, "name"),
-                Personality    = GetString(fields, "personality"),
-                ShortPersonality = GetString(fields, "shortPersonality"),
-                VoiceId        = GetString(fields, "voiceId"),
-                IconUrl        = GetString(fields, "iconUrl"),
-                ModelUrl       = GetString(fields, "modelUrl"),
-            };
+            _http.DefaultRequestHeaders.Authorization = idToken != null
+                ? new AuthenticationHeaderValue("Bearer", idToken)
+                : null;
         }
-        catch { return null; }
-    }
 
-    // ===== キャラ一覧取得 =====
-    public async Task<List<Character>> GetCharactersAsync(string uid, string sortOrder)
-    {
-        var token = await GetTokenAsync();
-        if (token == null) return new();
-
-        var url = $"https://firestore.googleapis.com/v1/projects/{ProjectId}/databases/(default)/documents:runQuery";
-        var body = JsonSerializer.Serialize(new
+        public async Task<List<Character>> GetCharactersAsync(string userId)
         {
-            structuredQuery = new
+            var queryUrl = $"{_baseUrl}:runQuery";
+            var query = new
             {
-                from = new[] { new { collectionId = "characters" } },
-                where = new
+                structuredQuery = new
                 {
-                    fieldFilter = new
+                    from = new[] { new { collectionId = "characters" } },
+                    where = new
                     {
-                        field = new { fieldPath = "creator" },
-                        op = "EQUAL",
-                        value = new { stringValue = uid }
-                    }
-                },
-                orderBy = new[]
-                {
-                    new
-                    {
-                        field = new { fieldPath = "createdAt" },
-                        direction = sortOrder == "asc" ? "ASCENDING" : "DESCENDING"
+                        fieldFilter = new
+                        {
+                            field = new { fieldPath = "userId" },
+                            op = "EQUAL",
+                            value = new { stringValue = userId }
+                        }
                     }
                 }
-            }
-        });
+            };
 
-        var req = new HttpRequestMessage(HttpMethod.Post, url)
-        {
-            Content = new StringContent(body, Encoding.UTF8, "application/json")
-        };
-        req.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            var response = await _http.PostAsJsonAsync(queryUrl, query);
+            if (!response.IsSuccessStatusCode) return [];
 
-        var res = await _http.SendAsync(req);
-        if (!res.IsSuccessStatusCode) return new();
+            var json = await response.Content.ReadFromJsonAsync<JsonElement[]>();
+            if (json == null) return [];
 
-        var json = await res.Content.ReadAsStringAsync();
-        var docs = JsonSerializer.Deserialize<JsonElement[]>(json);
-        if (docs == null) return new();
-
-        var list = new List<Character>();
-        foreach (var d in docs)
-        {
-            try
+            var characters = new List<Character>();
+            foreach (var item in json)
             {
-                var docId = d.GetProperty("document")
-                             .GetProperty("name").GetString()!
-                             .Split('/').Last();
-                var fields = d.GetProperty("document").GetProperty("fields");
-                list.Add(new Character
+                if (!item.TryGetProperty("document", out var doc)) continue;
+                characters.Add(ParseCharacter(doc));
+            }
+            return characters;
+        }
+
+        public async Task<string?> CreateCharacterAsync(Character character)
+        {
+            var url = $"{_baseUrl}/characters";
+            var body = new
+            {
+                fields = new Dictionary<string, object>
                 {
-                    Id               = docId,
-                    Name             = GetString(fields, "name"),
-                    ShortPersonality = GetString(fields, "shortPersonality"),
-                    IconUrl          = GetString(fields, "iconUrl"),
-                });
-            }
-            catch { }
+                    ["name"] = new { stringValue = character.Name },
+                    ["personality"] = new { stringValue = character.Personality },
+                    ["vrmUrl"] = new { stringValue = character.VrmUrl },
+                    ["ttsVoice"] = new { stringValue = character.TtsVoice },
+                    ["userId"] = new { stringValue = character.UserId },
+                    ["createdAt"] = new { timestampValue = character.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                }
+            };
+
+            var response = await _http.PostAsJsonAsync(url, body);
+            if (!response.IsSuccessStatusCode) return null;
+
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            var name = json.GetProperty("name").GetString()!;
+            return name.Split('/').Last();
         }
-        return list;
-    }
 
-    // ===== キャラ作成 =====
-    public async Task CreateCharacterAsync(Dictionary<string, object?> data)
-    {
-        var token = await GetTokenAsync();
-        if (token == null) return;
-
-        var fields = new Dictionary<string, object>();
-        foreach (var kv in data)
+        public async Task DeleteCharacterAsync(string characterId)
         {
-            if (kv.Value == null)
-                fields[kv.Key] = new { nullValue = (object?)null };
-            else
-                fields[kv.Key] = new { stringValue = kv.Value.ToString() };
+            await _http.DeleteAsync($"{_baseUrl}/characters/{characterId}");
         }
-        // 作成日時
-        fields["createdAt"] = new { timestampValue = DateTime.UtcNow.ToString("o") };
 
-        var body = JsonSerializer.Serialize(new { fields });
-        var req = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/characters")
+        public async Task<List<Message>> GetMessagesAsync(string characterId)
         {
-            Content = new StringContent(body, Encoding.UTF8, "application/json")
-        };
-        req.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        await _http.SendAsync(req);
-    }
-
-    // ===== スレッド保存 =====
-    public async Task SaveThreadAsync(string threadId, string uid, string characterId)
-    {
-        var token = await GetTokenAsync();
-        if (token == null) return;
-
-        var url = $"{BaseUrl}/threads/{threadId}";
-        var body = JsonSerializer.Serialize(new
-        {
-            fields = new
+            var queryUrl = $"{_baseUrl}:runQuery";
+            var query = new
             {
-                userId      = new { stringValue = uid },
-                characterId = new { stringValue = characterId },
-                updatedAt   = new { timestampValue = DateTime.UtcNow.ToString("o") }
-            }
-        });
-
-        var req = new HttpRequestMessage(HttpMethod.Patch, url)
-        {
-            Content = new StringContent(body, Encoding.UTF8, "application/json")
-        };
-        req.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        await _http.SendAsync(req);
-    }
-
-    // ===== メッセージ追加 =====
-    public async Task AddMessageAsync(string threadId, string role, string content)
-    {
-        var token = await GetTokenAsync();
-        if (token == null) return;
-
-        var url = $"{BaseUrl}/threads/{threadId}/messages";
-        var body = JsonSerializer.Serialize(new
-        {
-            fields = new
-            {
-                role      = new { stringValue = role },
-                content   = new { stringValue = content },
-                createdAt = new { timestampValue = DateTime.UtcNow.ToString("o") }
-            }
-        });
-
-        var req = new HttpRequestMessage(HttpMethod.Post, url)
-        {
-            Content = new StringContent(body, Encoding.UTF8, "application/json")
-        };
-        req.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        await _http.SendAsync(req);
-    }
-
-    // ===== メッセージ一覧取得 =====
-    public async Task<List<Message>> GetMessagesAsync(string threadId)
-    {
-        var token = await GetTokenAsync();
-        if (token == null) return new();
-
-        var url = $"{BaseUrl}/threads/{threadId}/messages?orderBy=createdAt";
-        var req = new HttpRequestMessage(HttpMethod.Get, url);
-        req.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var res = await _http.SendAsync(req);
-        if (!res.IsSuccessStatusCode) return new();
-
-        var json = await res.Content.ReadAsStringAsync();
-        var root = JsonSerializer.Deserialize<JsonElement>(json);
-
-        var list = new List<Message>();
-        if (!root.TryGetProperty("documents", out var docs)) return list;
-
-        foreach (var d in docs.EnumerateArray())
-        {
-            try
-            {
-                var id = d.GetProperty("name").GetString()!.Split('/').Last();
-                var fields = d.GetProperty("fields");
-                list.Add(new Message
+                structuredQuery = new
                 {
-                    Id   = id,
-                    Role = GetString(fields, "role"),
-                    Text = GetString(fields, "content"),
-                });
+                    from = new[] { new { collectionId = "messages" } },
+                    where = new
+                    {
+                        fieldFilter = new
+                        {
+                            field = new { fieldPath = "characterId" },
+                            op = "EQUAL",
+                            value = new { stringValue = characterId }
+                        }
+                    },
+                    orderBy = new[] { new { field = new { fieldPath = "timestamp" }, direction = "ASCENDING" } },
+                    limit = 50
+                }
+            };
+
+            var response = await _http.PostAsJsonAsync(queryUrl, query);
+            if (!response.IsSuccessStatusCode) return [];
+
+            var json = await response.Content.ReadFromJsonAsync<JsonElement[]>();
+            if (json == null) return [];
+
+            var messages = new List<Message>();
+            foreach (var item in json)
+            {
+                if (!item.TryGetProperty("document", out var doc)) continue;
+                messages.Add(ParseMessage(doc));
             }
-            catch { }
+            return messages;
         }
-        return list;
-    }
 
-    // ===== アイコンアップロード（Firebase Storage REST） =====
-    public async Task<string?> UploadIconAsync(string uid, string localPath)
-    {
-        var token = await GetTokenAsync();
-        if (token == null) return null;
-
-        var fileName = $"users/{uid}/icon.jpg";
-        var url = $"https://firebasestorage.googleapis.com/v0/b/{ProjectId}.appspot.com/o?name={Uri.EscapeDataString(fileName)}";
-
-        var bytes = await File.ReadAllBytesAsync(localPath);
-        var req = new HttpRequestMessage(HttpMethod.Post, url)
+        public async Task SaveMessageAsync(Message message)
         {
-            Content = new ByteArrayContent(bytes)
-        };
-        req.Content.Headers.ContentType =
-            new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
-        req.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var res = await _http.SendAsync(req);
-        if (!res.IsSuccessStatusCode) return null;
-
-        var json = await res.Content.ReadAsStringAsync();
-        var data = JsonSerializer.Deserialize<JsonElement>(json);
-        var storagePath = data.GetProperty("name").GetString();
-
-        return $"https://firebasestorage.googleapis.com/v0/b/{ProjectId}.appspot.com/o/{Uri.EscapeDataString(storagePath!)}?alt=media";
-    }
-
-    // ===== ヘルパー：Firestoreのフィールドから文字列取得 =====
-    static string GetString(JsonElement fields, string key)
-    {
-        try
-        {
-            return fields.GetProperty(key).GetProperty("stringValue").GetString() ?? "";
+            var body = new
+            {
+                fields = new Dictionary<string, object>
+                {
+                    ["characterId"] = new { stringValue = message.CharacterId },
+                    ["role"] = new { stringValue = message.Role },
+                    ["text"] = new { stringValue = message.Text },
+                    ["emotion"] = new { stringValue = message.Emotion },
+                    ["timestamp"] = new { timestampValue = message.Timestamp.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                }
+            };
+            await _http.PostAsJsonAsync($"{_baseUrl}/messages", body);
         }
-        catch { return ""; }
+
+        public async Task<string?> UploadVrmAsync(string userId, string fileName, Stream fileStream)
+        {
+            var objectPath = Uri.EscapeDataString($"vrm/{userId}/{fileName}");
+            var url = $"https://firebasestorage.googleapis.com/v0/b/{_storageBucket}/o?uploadType=media&name={Uri.EscapeDataString($"vrm/{userId}/{fileName}")}";
+
+            var content = new StreamContent(fileStream);
+            content.Headers.ContentType = new MediaTypeHeaderValue("model/gltf-binary");
+            var response = await _http.PostAsync(url, content);
+            if (!response.IsSuccessStatusCode) return null;
+
+            return $"https://firebasestorage.googleapis.com/v0/b/{_storageBucket}/o/{objectPath}?alt=media";
+        }
+
+        private static Character ParseCharacter(JsonElement doc)
+        {
+            var fields = doc.GetProperty("fields");
+            var name = doc.GetProperty("name").GetString()!;
+            return new Character
+            {
+                Id = name.Split('/').Last(),
+                Name = GetString(fields, "name"),
+                Personality = GetString(fields, "personality"),
+                VrmUrl = GetString(fields, "vrmUrl"),
+                TtsVoice = GetString(fields, "ttsVoice"),
+                UserId = GetString(fields, "userId")
+            };
+        }
+
+        private static Message ParseMessage(JsonElement doc)
+        {
+            var fields = doc.GetProperty("fields");
+            return new Message
+            {
+                CharacterId = GetString(fields, "characterId"),
+                Role = GetString(fields, "role"),
+                Text = GetString(fields, "text"),
+                Emotion = GetString(fields, "emotion")
+            };
+        }
+
+        private static string GetString(JsonElement fields, string key)
+        {
+            if (fields.TryGetProperty(key, out var f) && f.TryGetProperty("stringValue", out var v))
+                return v.GetString() ?? string.Empty;
+            return string.Empty;
+        }
     }
 }
