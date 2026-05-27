@@ -1,12 +1,37 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\dipi4\\OneDrive\\\u30C7\u30B9\u30AF\u30C8\u30C3\u30D7\\AICharacterMaker\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{B5E930C2-FBEA-8002-C908-69BF4B3D8FC7}|AICharacterMaker\\AICharacterMaker.csproj|c:\\users\\dipi4\\onedrive\\\u30C7\u30B9\u30AF\u30C8\u30C3\u30D7\\aicharactermaker\\aicharactermaker\\aicharactermaker.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{B5E930C2-FBEA-8002-C908-69BF4B3D8FC7}|AICharacterMaker\\AICharacterMaker.csproj|solutionrelative:aicharactermaker\\aicharactermaker.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": []
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AICharacterMaker.csproj",
+              "DocumentMoniker": "C:\\Users\\dipi4\\OneDrive\\\u30C7\u30B9\u30AF\u30C8\u30C3\u30D7\\AICharacterMaker\\AICharacterMaker\\AICharacterMaker.csproj",
+              "RelativeDocumentMoniker": "AICharacterMaker\\AICharacterMaker.csproj",
+              "ToolTip": "C:\\Users\\dipi4\\OneDrive\\\u30C7\u30B9\u30AF\u30C8\u30C3\u30D7\\AICharacterMaker\\AICharacterMaker\\AICharacterMaker.csproj",
+              "RelativeToolTip": "AICharacterMaker\\AICharacterMaker.csproj",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAswCAAAABfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-05-24T16:32:12.635Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

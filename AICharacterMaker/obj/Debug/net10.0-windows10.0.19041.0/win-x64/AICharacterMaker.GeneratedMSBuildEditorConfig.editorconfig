@@ -49,6 +49,56 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
+[C:/Users/dipi4/OneDrive/デスクトップ/AICharacterMaker/AICharacterMaker/Controls/FooterBar.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = AICharacterMaker.Controls.FooterBar.xaml
+build_metadata.AdditionalFiles.TargetPath = Controls\FooterBar.xaml
+build_metadata.AdditionalFiles.RelativePath = Controls\FooterBar.xaml
+build_metadata.AdditionalFiles.Inflator = SourceGen
+build_metadata.AdditionalFiles.NoWarn = 
+build_metadata.AdditionalFiles.EnableDiagnostics = 
+build_metadata.AdditionalFiles.LineInfo = 
+
+[C:/Users/dipi4/OneDrive/デスクトップ/AICharacterMaker/AICharacterMaker/Pages/CharaCreatePage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = AICharacterMaker.Pages.CharaCreatePage.xaml
+build_metadata.AdditionalFiles.TargetPath = Pages\CharaCreatePage.xaml
+build_metadata.AdditionalFiles.RelativePath = Pages\CharaCreatePage.xaml
+build_metadata.AdditionalFiles.Inflator = SourceGen
+build_metadata.AdditionalFiles.NoWarn = 
+build_metadata.AdditionalFiles.EnableDiagnostics = 
+build_metadata.AdditionalFiles.LineInfo = 
+
+[C:/Users/dipi4/OneDrive/デスクトップ/AICharacterMaker/AICharacterMaker/Pages/CharaListPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = AICharacterMaker.Pages.CharaListPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Pages\CharaListPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Pages\CharaListPage.xaml
+build_metadata.AdditionalFiles.Inflator = SourceGen
+build_metadata.AdditionalFiles.NoWarn = 
+build_metadata.AdditionalFiles.EnableDiagnostics = 
+build_metadata.AdditionalFiles.LineInfo = 
+
+[C:/Users/dipi4/OneDrive/デスクトップ/AICharacterMaker/AICharacterMaker/Pages/ChatPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = AICharacterMaker.Pages.ChatPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Pages\ChatPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Pages\ChatPage.xaml
+build_metadata.AdditionalFiles.Inflator = SourceGen
+build_metadata.AdditionalFiles.NoWarn = 
+build_metadata.AdditionalFiles.EnableDiagnostics = 
+build_metadata.AdditionalFiles.LineInfo = 
+
+[C:/Users/dipi4/OneDrive/デスクトップ/AICharacterMaker/AICharacterMaker/Pages/LoginPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = AICharacterMaker.Pages.LoginPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Pages\LoginPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Pages\LoginPage.xaml
+build_metadata.AdditionalFiles.Inflator = SourceGen
+build_metadata.AdditionalFiles.NoWarn = 
+build_metadata.AdditionalFiles.EnableDiagnostics = 
+build_metadata.AdditionalFiles.LineInfo = 
+
 [C:/Users/dipi4/OneDrive/デスクトップ/AICharacterMaker/AICharacterMaker/Resources/Styles/Colors.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = AICharacterMaker.Resources.Styles.Colors.xaml

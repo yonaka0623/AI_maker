@@ -18,7 +18,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AICharacterMaker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+e56c02d12245136d4138b351f1caee09e116ef12")]
 [assembly: System.Reflection.AssemblyProductAttribute("AICharacterMaker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AICharacterMaker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

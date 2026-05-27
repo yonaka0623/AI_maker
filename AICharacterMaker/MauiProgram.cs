@@ -1,8 +1,10 @@
+using CommunityToolkit.Maui.Media;
 using AICharacterMaker.Services;
 using CommunityToolkit.Maui;
+//using CommunityToolkit.Maui.Media;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Plugin.Maui.Audio;
+//using Plugin.Maui.Audio;
 
 namespace AICharacterMaker
 {
@@ -14,7 +16,7 @@ namespace AICharacterMaker
             builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
-                .UseAudio()
+                //.UseAudio()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -51,6 +53,7 @@ namespace AICharacterMaker
             builder.Services.AddTransient<Pages.CharaListPage>();
             builder.Services.AddTransient<Pages.ChatPage>();
             builder.Services.AddTransient<Pages.CharaCreatePage>();
+            //builder.Services.AddSingleton(SpeechToText.Default);
 
 #if DEBUG
             builder.Logging.AddDebug();

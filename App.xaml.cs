@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 
-namespace AiCharacterMaker;
+namespace AICharacterMaker;
 
 public partial class App : Application
 {
