@@ -3,71 +3,114 @@
     x:Class="AICharacterMaker.Pages.LoginPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="#1E1E2E"
+    BackgroundColor="White"
     Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="*,Auto,*" Padding="32">
+    <Grid RowDefinitions="Auto,1,*">
 
-        <VerticalStackLayout
-            Grid.Row="1"
-            Spacing="16">
+        <!-- ヘッダー -->
+        <Grid Grid.Row="0"
+                ColumnDefinitions="*,Auto,*"
+                Padding="16,12">
+            <Label Grid.Column="0"
+                   Text="← ホーム"
+                   TextColor="#007AFF"
+                   VerticalOptions="Center"
+                   FontSize="15">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnHomeClicked"/>
+                </Label.GestureRecognizers>
+            </Label>
+            <Label Grid.Column="1"
+                   Text="ログイン / 新規登録"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   TextColor="Black"
+                   VerticalOptions="Center"/>
+        </Grid>
 
-            <Label
-                Text="AI Character Maker"
-                FontSize="28"
-                FontAttributes="Bold"
-                TextColor="White"
-                HorizontalOptions="Center"
-                Margin="0,0,0,24" />
+        <!-- ヘッダー下の区切り線 -->
+        <BoxView Grid.Row="1"
+                BackgroundColor="#E0E0E0"/>
 
-            <Entry
-                x:Name="EmailEntry"
-                Placeholder="メールアドレス"
-                Keyboard="Email"
-                BackgroundColor="#2A2A3E"
-                TextColor="White"
-                PlaceholderColor="#888"
-                Margin="0,4" />
+        <!-- メインコンテンツ -->
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="24,32"
+                    Spacing="14">
 
-            <Entry
-                x:Name="PasswordEntry"
-                Placeholder="パスワード"
-                IsPassword="True"
-                BackgroundColor="#2A2A3E"
-                TextColor="White"
-                PlaceholderColor="#888"
-                Margin="0,4" />
+                <Label Text="ログイン"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="Black"
+                       Margin="0,0,0,8"/>
 
-            <Label
-                x:Name="ErrorLabel"
-                TextColor="#FF6B6B"
-                IsVisible="False"
-                HorizontalOptions="Center" />
+                <!-- メールアドレス -->
+                <Border Stroke="#CCCCCC"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 8"
+                        Padding="12,0">
+                    <Entry x:Name="EmailEntry"
+                           Placeholder="メールアドレス"
+                           Keyboard="Email"
+                           BackgroundColor="Transparent"
+                           TextColor="Black"
+                           PlaceholderColor="#AAAAAA"
+                           HeightRequest="48"/>
+                </Border>
 
-            <Button
-                Text="ログイン"
-                BackgroundColor="#7C3AED"
-                TextColor="White"
-                CornerRadius="8"
-                Margin="0,8,0,0"
-                Clicked="OnLoginClicked" />
+                <!-- パスワード -->
+                <Border Stroke="#CCCCCC"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 8"
+                        Padding="12,0">
+                    <Entry x:Name="PasswordEntry"
+                           Placeholder="パスワード"
+                           IsPassword="True"
+                           BackgroundColor="Transparent"
+                           TextColor="Black"
+                           PlaceholderColor="#AAAAAA"
+                           HeightRequest="48"/>
+                </Border>
 
-            <Button
-                Text="新規登録"
-                BackgroundColor="Transparent"
-                TextColor="#A78BFA"
-                BorderColor="#7C3AED"
-                BorderWidth="1"
-                CornerRadius="8"
-                Clicked="OnRegisterClicked" />
+                <!-- エラーメッセージ -->
+                <Label x:Name="ErrorLabel"
+                       TextColor="#FF3B30"
+                       IsVisible="False"
+                       FontSize="14"/>
 
-            <ActivityIndicator
-                x:Name="LoadingIndicator"
-                IsRunning="False"
-                IsVisible="False"
-                Color="#7C3AED"
-                HorizontalOptions="Center" />
+                <!-- ログインボタン -->
+                <Button Text="ログイン"
+                        BackgroundColor="#007AFF"
+                        TextColor="White"
+                        CornerRadius="8"
+                        HeightRequest="50"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        Margin="0,8,0,0"
+                        Clicked="OnLoginClicked"/>
 
-        </VerticalStackLayout>
+                <ActivityIndicator x:Name="LoadingIndicator"
+                                   IsRunning="False"
+                                   IsVisible="False"
+                                   Color="#007AFF"
+                                   HorizontalOptions="Center"/>
+
+                <!-- 区切り線 -->
+                <BoxView HeightRequest="1"
+                         BackgroundColor="#E0E0E0"
+                         Margin="0,8"/>
+
+                <!-- 新規登録リンク -->
+                <Label Text="新規の方はこちら"
+                       TextColor="#007AFF"
+                       HorizontalOptions="Center"
+                       FontSize="15">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnRegisterClicked"/>
+                    </Label.GestureRecognizers>
+                </Label>
+
+            </VerticalStackLayout>
+        </ScrollView>
     </Grid>
 </ContentPage>

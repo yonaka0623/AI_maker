@@ -16,15 +16,15 @@ namespace AICharacterMaker.Pages
 
         private async void OnLoginClicked(object sender, EventArgs e)
         {
-            await ExecuteAuthAsync(() => _auth.SignInAsync(EmailEntry.Text, PasswordEntry.Text));
+            await ExecuteAuthAsync(() => _auth.SignInAsync(EmailEntry.Text?.Trim(), PasswordEntry.Text));
         }
 
         private async void OnRegisterClicked(object sender, EventArgs e)
         {
-            await ExecuteAuthAsync(() => _auth.RegisterAsync(EmailEntry.Text, PasswordEntry.Text));
+            await ExecuteAuthAsync(() => _auth.RegisterAsync(EmailEntry.Text?.Trim(), PasswordEntry.Text));
         }
 
-        private async Task ExecuteAuthAsync(Func<Task<bool>> authAction)
+        private async Task ExecuteAuthAsync(Func<Task> authAction)
         {
             ErrorLabel.IsVisible = false;
             LoadingIndicator.IsVisible = true;
@@ -32,21 +32,13 @@ namespace AICharacterMaker.Pages
 
             try
             {
-                var success = await authAction();
-                if (success)
-                {
-                    _firebase.SetAuthToken(_auth.IdToken);
-                    await Shell.Current.GoToAsync("//CharaListPage");
-                }
-                else
-                {
-                    ErrorLabel.Text = "認証に失敗しました。メールアドレスとパスワードを確認してください。";
-                    ErrorLabel.IsVisible = true;
-                }
+                await authAction();
+                _firebase.SetAuthToken(_auth.IdToken);
+                await Shell.Current.GoToAsync("HomePage");
             }
             catch (Exception ex)
             {
-                ErrorLabel.Text = $"エラー: {ex.Message}";
+                ErrorLabel.Text = ex.Message;
                 ErrorLabel.IsVisible = true;
             }
             finally
@@ -54,6 +46,10 @@ namespace AICharacterMaker.Pages
                 LoadingIndicator.IsRunning = false;
                 LoadingIndicator.IsVisible = false;
             }
+        }
+        private async void OnHomeClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("..");
         }
     }
 }

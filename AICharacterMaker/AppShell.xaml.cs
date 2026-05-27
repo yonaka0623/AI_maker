@@ -5,6 +5,7 @@ namespace AICharacterMaker
         public AppShell()
         {
             InitializeComponent();
+            Routing.RegisterRoute("HomePage", typeof(Pages.HomePage));
             Routing.RegisterRoute("CharaListPage", typeof(Pages.CharaListPage));
             Routing.RegisterRoute("ChatPage", typeof(Pages.ChatPage));
             Routing.RegisterRoute("CharaCreatePage", typeof(Pages.CharaCreatePage));

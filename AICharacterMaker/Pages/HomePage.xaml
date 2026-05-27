@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+        x:Class="AICharacterMaker.Pages.HomePage"
+        xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+        BackgroundColor="#F2F2F7"
+        Shell.NavBarIsVisible="False">
+
+        <Grid RowDefinitions="Auto,1,*,Auto,Auto">
+
+                <!-- ヘッダー -->
+                <Grid Grid.Row="0"
+                                ColumnDefinitions="*,Auto"
+                      Padding="16,14"
+                                BackgroundColor="White">
+                        <Label Text="AI Friends"
+                               FontSize="20"
+                                        FontAttributes="Bold"
+                               TextColor="Black"
+                                        VerticalOptions="Center"/>
+                        <Button Grid.Column="1"
+                                Text="設定"
+                                BackgroundColor="#E0E0E0"
+                                        TextColor="Black"
+                                CornerRadius="8"
+                                        FontSize="14"
+                                HeightRequest="36"
+                                        Padding="12,0"
+                                Clicked="OnSettingsClicked"/>
+                </Grid>
+
+                <BoxView Grid.Row="1"
+                                BackgroundColor="#E0E0E0"/>
+
+                <!-- メインエリア（VRM表示エリア） -->
+                <Grid Grid.Row="2"
+                                BackgroundColor="#F2F2F7">
+
+                        <!-- キャラ未選択メッセージ -->
+                        <Border x:Name="NoCharaMessage"
+                                BackgroundColor="White"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 16"
+                                Padding="24,20"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center">
+                                <VerticalStackLayout Spacing="6"
+                                                HorizontalOptions="Center">
+                                        <Label Text="キャラが選択されていません"
+                                               TextColor="#334155"
+                                                        FontSize="15"
+                                               HorizontalOptions="Center"/>
+                                        <Label Text="下の「キャラ一覧」から選んでください"
+                                               TextColor="#334155"
+                                                        FontSize="15"
+                                               HorizontalOptions="Center"/>
+                                </VerticalStackLayout>
+                        </Border>
+
+                        <!-- VRMモデル未設定メッセージ（キャラ選択済み・VRMなし） -->
+                        <Border x:Name="VrmNotSetMessage"
+                                IsVisible="False"
+                                BackgroundColor="White"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 24"
+                                Padding="32,12"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center">
+                                <Label Text="VRMモデル未設定"
+                                       TextColor="#888888"
+                                                FontSize="15"
+                                       HorizontalOptions="Center"/>
+                        </Border>
+
+                        <!-- 将来: WebViewでVRM表示 -->
+
+                </Grid>
+
+                <!-- トークコントロール（キャラ選択時のみ表示） -->
+                <VerticalStackLayout x:Name="TalkControls"
+                                     Grid.Row="3"
+                                     IsVisible="False"
+                                     Spacing="0"
+                                     BackgroundColor="White"
+                                     Padding="16,12">
+                        <Label x:Name="StatusLabel"
+                               Text="状態：待機"
+                               TextColor="#555555"
+                                        FontSize="13"
+                               Margin="0,0,0,8"/>
+                        <Button Text="押して話す"
+                                BackgroundColor="#007AFF"
+                                        TextColor="White"
+                                CornerRadius="8"
+                                        FontSize="17"
+                                        FontAttributes="Bold"
+                                HeightRequest="54"
+                                Clicked="OnTalkClicked"/>
+                        <Label Text="※ いまはUIだけ。次に音声認識（STT）をつなげる。"
+                               TextColor="#888888"
+                                        FontSize="12"
+                               Margin="0,8,0,0"/>
+                </VerticalStackLayout>
+
+                <!-- ボトムナビ -->
+                <Grid Grid.Row="4"
+                                ColumnDefinitions="*,*,*,*"
+                                HeightRequest="56">
+                        <Button Grid.Column="0"
+                                        Text="ホーム"
+                                BackgroundColor="#E0E0E0"
+                                        TextColor="#333333"
+                                FontSize="13"/>
+                        <Button Grid.Column="1"
+                                        Text="チャット"
+                                BackgroundColor="#4CAF50"
+                                        TextColor="White"
+                                FontSize="13"
+                                        Clicked="OnChatTabClicked"/>
+                        <Button Grid.Column="2"
+                                        Text="キャラ一覧"
+                                BackgroundColor="#FF6B6B"
+                                        TextColor="White"
+                                FontSize="13"
+                                        Clicked="OnCharaListTabClicked"/>
+                        <Button Grid.Column="3"
+                                        Text="思い出/詳細"
+                                BackgroundColor="#E0E0E0"
+                                        TextColor="#333333"
+                                FontSize="13"/>
+                </Grid>
+
+        </Grid>
+</ContentPage>

@@ -38,11 +38,12 @@ namespace AICharacterMaker.Services
                     {
                         fieldFilter = new
                         {
-                            field = new { fieldPath = "userId" },
+                            field = new { fieldPath = "creator" },   // userId → creator
                             op = "EQUAL",
                             value = new { stringValue = userId }
                         }
-                    }
+                    },
+                    orderBy = new[] { new { field = new { fieldPath = "createdAt" }, direction = "DESCENDING" } }
                 }
             };
 
@@ -69,10 +70,12 @@ namespace AICharacterMaker.Services
                 fields = new Dictionary<string, object>
                 {
                     ["name"] = new { stringValue = character.Name },
+                    ["shortDescription"] = new { stringValue = character.ShortDescription },
                     ["personality"] = new { stringValue = character.Personality },
                     ["vrmUrl"] = new { stringValue = character.VrmUrl },
+                    ["iconUrl"] = new { stringValue = character.IconUrl },
                     ["ttsVoice"] = new { stringValue = character.TtsVoice },
-                    ["userId"] = new { stringValue = character.UserId },
+                    ["creator"] = new { stringValue = character.Creator },
                     ["createdAt"] = new { timestampValue = character.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ") }
                 }
             };
@@ -81,8 +84,7 @@ namespace AICharacterMaker.Services
             if (!response.IsSuccessStatusCode) return null;
 
             var json = await response.Content.ReadFromJsonAsync<JsonElement>();
-            var name = json.GetProperty("name").GetString()!;
-            return name.Split('/').Last();
+            return json.GetProperty("name").GetString()!.Split('/').Last();
         }
 
         public async Task DeleteCharacterAsync(string characterId)
@@ -164,10 +166,12 @@ namespace AICharacterMaker.Services
             {
                 Id = name.Split('/').Last(),
                 Name = GetString(fields, "name"),
+                ShortDescription = GetString(fields, "shortDescription"),
                 Personality = GetString(fields, "personality"),
                 VrmUrl = GetString(fields, "vrmUrl"),
+                IconUrl = GetString(fields, "iconUrl"),
                 TtsVoice = GetString(fields, "ttsVoice"),
-                UserId = GetString(fields, "userId")
+                Creator = GetString(fields, "creator")
             };
         }
 
@@ -188,6 +192,54 @@ namespace AICharacterMaker.Services
             if (fields.TryGetProperty(key, out var f) && f.TryGetProperty("stringValue", out var v))
                 return v.GetString() ?? string.Empty;
             return string.Empty;
+        }
+
+        public async Task<string?> GetSelectedCharacterIdAsync(string userId)
+        {
+            var url = $"{_baseUrl}/users/{userId}";
+            var response = await _http.GetAsync(url);
+            if (!response.IsSuccessStatusCode) return null;
+
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            if (json.TryGetProperty("fields", out var fields))
+                return GetString(fields, "selectedCharacterId");
+            return null;
+        }
+
+        public async Task SetSelectedCharacterAsync(string userId, string characterId)
+        {
+            var url = $"{_baseUrl}/users/{userId}?updateMask.fieldPaths=selectedCharacterId";
+            var body = new
+            {
+                fields = new Dictionary<string, object>
+                {
+                    ["selectedCharacterId"] = new { stringValue = characterId }
+                }
+            };
+            await _http.PatchAsJsonAsync(url, body);
+        }
+
+        public async Task<string?> UploadIconAsync(string userId, string fileName, Stream fileStream)
+        {
+            var objectPath = Uri.EscapeDataString($"icons/{userId}/{fileName}");
+            var url = $"https://firebasestorage.googleapis.com/v0/b/{_storageBucket}/o?uploadType=media&name={Uri.EscapeDataString($"icons/{userId}/{fileName}")}";
+
+            var content = new StreamContent(fileStream);
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+            var response = await _http.PostAsync(url, content);
+            if (!response.IsSuccessStatusCode) return null;
+
+            return $"https://firebasestorage.googleapis.com/v0/b/{_storageBucket}/o/{objectPath}?alt=media";
+        }
+
+        public async Task<Character?> GetCharacterAsync(string characterId)
+        {
+            var url = $"{_baseUrl}/characters/{characterId}";
+            var response = await _http.GetAsync(url);
+            if (!response.IsSuccessStatusCode) return null;
+
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            return ParseCharacter(json);
         }
     }
 }

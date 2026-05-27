@@ -3,97 +3,179 @@
     x:Class="AICharacterMaker.Pages.CharaListPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:controls="clr-namespace:AICharacterMaker.Controls"
     xmlns:models="clr-namespace:AICharacterMaker.Models"
-    BackgroundColor="#1E1E2E"
+    BackgroundColor="#F2F2F7"
     Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,1,Auto,*,Auto,Auto">
 
-        <!-- Header -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="20,16">
-            <Label
-                Text="キャラクター一覧"
-                FontSize="22"
+        <!-- ヘッダー -->
+        <Label Grid.Row="0"
+               Text="キャラ一覧"
+               FontSize="18"
                 FontAttributes="Bold"
-                TextColor="White"
-                VerticalOptions="Center" />
-            <Button
-                Grid.Column="1"
-                Text="ログアウト"
-                FontSize="12"
-                TextColor="#A78BFA"
-                BackgroundColor="Transparent"
-                Clicked="OnLogoutClicked" />
+                TextColor="Black"
+               HorizontalOptions="Center"
+               Padding="0,16"/>
+
+        <BoxView Grid.Row="1"
+                BackgroundColor="#E0E0E0"/>
+
+        <!-- ソートボタン -->
+        <Grid Grid.Row="2"
+                ColumnDefinitions="*,*"
+                Margin="16,12,16,4">
+            <Button x:Name="NewOrderBtn"
+                    Grid.Column="0"
+                    Text="新しい順"
+                    BackgroundColor="#007AFF"
+                    TextColor="White"
+                    CornerRadius="8"
+                    FontSize="14"
+                    Clicked="OnNewOrderClicked"/>
+            <Button x:Name="OldOrderBtn"
+                    Grid.Column="1"
+                    Text="古い順"
+                    BackgroundColor="#E0E0E0"
+                    TextColor="#333333"
+                    CornerRadius="8"
+                    FontSize="14"
+                    Clicked="OnOldOrderClicked"/>
         </Grid>
 
-        <!-- Character List -->
-        <CollectionView
-            Grid.Row="1"
-            x:Name="CharaCollection"
-            Margin="16,0"
-            SelectionMode="None">
-
-            <CollectionView.EmptyView>
-                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8">
-                    <Label Text="キャラクターがいません" TextColor="#888" FontSize="16" />
-                    <Label Text="＋ボタンで追加してください" TextColor="#666" FontSize="13" />
-                </VerticalStackLayout>
-            </CollectionView.EmptyView>
-
+        <!-- キャラ一覧 -->
+        <CollectionView Grid.Row="3"
+                        x:Name="CharaCollection"
+                        Margin="16,4"
+                        SelectionMode="None">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:Character">
-                    <SwipeView>
-                        <SwipeView.RightItems>
-                            <SwipeItems>
-                                <SwipeItem
-                                    Text="削除"
-                                    BackgroundColor="#DC2626"
-                                    Invoked="OnDeleteSwipeInvoked" />
-                            </SwipeItems>
-                        </SwipeView.RightItems>
+                    <Border Margin="0,5"
+                            Padding="12"
+                            BackgroundColor="White"
+                            StrokeThickness="1.5"
+                            StrokeShape="RoundRectangle 12">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border"
+                                         Binding="{Binding IsSelected}"
+                                    Value="True">
+                                <Setter Property="Stroke"
+                                        Value="#007AFF"/>
+                                <Setter Property="BackgroundColor"
+                                        Value="#EEF4FF"/>
+                            </DataTrigger>
+                            <DataTrigger TargetType="Border"
+                                         Binding="{Binding IsSelected}"
+                                    Value="False">
+                                <Setter Property="Stroke"
+                                        Value="#E0E0E0"/>
+                                <Setter Property="BackgroundColor"
+                                        Value="White"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                CommandParameter="{Binding .}"
+                                Tapped="OnCharaTapped"/>
+                        </Border.GestureRecognizers>
 
-                        <Border
-                            BackgroundColor="#2A2A3E"
-                            Stroke="#3D3D5C"
-                            StrokeThickness="1"
-                            Margin="0,6"
-                            Padding="16">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
+                        <Grid ColumnDefinitions="56,*,Auto"
+                                ColumnSpacing="12">
 
-                            <Grid ColumnDefinitions="*,Auto">
-                                <VerticalStackLayout Spacing="4">
-                                    <Label
-                                        Text="{Binding Name}"
-                                        FontSize="18"
-                                        FontAttributes="Bold"
-                                        TextColor="White" />
-                                    <Label
-                                        Text="{Binding Personality}"
-                                        FontSize="13"
-                                        TextColor="#AAA"
-                                        LineBreakMode="TailTruncation"
-                                        MaxLines="2" />
-                                </VerticalStackLayout>
+                            <!-- アイコン -->
+                            <Border Grid.Column="0"
+                                    BackgroundColor="#CCCCCC"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 28"
+                                    WidthRequest="56"
+                                    HeightRequest="56"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center">
+                                <Label Text="NO&#10;IMAGE"
+                                       TextColor="White"
+                                        FontSize="10"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       HorizontalTextAlignment="Center"/>
+                            </Border>
 
-                                <Button
-                                    Grid.Column="1"
-                                    Text="▶"
-                                    FontSize="20"
-                                    TextColor="#7C3AED"
-                                    BackgroundColor="Transparent"
+                            <!-- 名前・説明 -->
+                            <VerticalStackLayout Grid.Column="1"
+                                                 VerticalOptions="Center"
+                                                 Spacing="4">
+                                <HorizontalStackLayout Spacing="6">
+                                    <Label Text="{Binding Name}"
+                                           FontSize="16"
+                                            FontAttributes="Bold"
+                                           TextColor="Black"
+                                           VerticalOptions="Center"/>
+                                    <BoxView IsVisible="{Binding IsSelected}"
+                                             Color="#007AFF"
+                                             WidthRequest="8"
+                                            HeightRequest="8"
+                                             CornerRadius="4"
+                                             VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+                                <Label Text="{Binding ShortDescription}"
+                                       FontSize="13"
+                                        TextColor="#666666"
+                                       LineBreakMode="TailTruncation"/>
+                            </VerticalStackLayout>
+
+                            <!-- 編集ボタン -->
+                            <Button Grid.Column="2"
+                                    Text="編集"
+                                    BackgroundColor="#E0E0E0"
+                                    TextColor="#333333"
+                                    FontSize="13"
+                                    CornerRadius="6"
+                                    HeightRequest="36"
+                                    Padding="12,0"
                                     CommandParameter="{Binding .}"
-                                    Clicked="OnStartChatClicked" />
-                            </Grid>
-                        </Border>
-                    </SwipeView>
+                                    Clicked="OnEditClicked"/>
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- Footer -->
-        <controls:FooterBar Grid.Row="2" />
+        <!-- 新規作成ボタン -->
+        <Button Grid.Row="4"
+                Text="＋ 新しいキャラを作成"
+                BackgroundColor="#4CAF50"
+                TextColor="White"
+                CornerRadius="8"
+                FontSize="16"
+                HeightRequest="52"
+                Margin="16,8"
+                Clicked="OnCreateClicked"/>
+
+        <!-- ボトムナビ -->
+        <Grid Grid.Row="5"
+                ColumnDefinitions="*,*,*,*"
+                HeightRequest="56">
+            <Button Grid.Column="0"
+                    Text="ホーム"
+                    BackgroundColor="#E0E0E0"
+                    TextColor="#333333"
+                    FontSize="13"
+                    Clicked="OnHomeTabClicked"/>
+            <Button Grid.Column="1"
+                    Text="チャット"
+                    BackgroundColor="#4CAF50"
+                    TextColor="White"
+                    FontSize="13"
+                    Clicked="OnChatTabClicked"/>
+            <Button Grid.Column="2"
+                    Text="キャラ一覧"
+                    BackgroundColor="#FF6B6B"
+                    TextColor="White"
+                    FontSize="13"/>
+            <Button Grid.Column="3"
+                    Text="思い出/詳細"
+                    BackgroundColor="#E0E0E0"
+                    TextColor="#333333"
+                    FontSize="13"/>
+        </Grid>
     </Grid>
 </ContentPage>

@@ -3,111 +3,170 @@
     x:Class="AICharacterMaker.Pages.CharaCreatePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="#1E1E2E"
+    BackgroundColor="#F2F2F7"
     Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,1,*,Auto">
 
-        <!-- Header -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="16,12">
-            <Button
-                Text="←"
-                FontSize="18"
-                TextColor="White"
-                BackgroundColor="Transparent"
-                Clicked="OnBackClicked" />
-            <Label
-                Grid.Column="1"
-                Text="キャラクター作成"
-                FontSize="18"
-                FontAttributes="Bold"
-                TextColor="White"
-                VerticalOptions="Center"
-                Margin="8,0" />
-        </Grid>
+        <!-- ヘッダー -->
+        <HorizontalStackLayout Grid.Row="0"
+                Padding="16,14"
+                Spacing="8">
+            <Label Text="← キャラ一覧"
+                   TextColor="#007AFF"
+                    FontSize="15"
+                   VerticalOptions="Center">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackClicked"/>
+                </Label.GestureRecognizers>
+            </Label>
+            <Label Text="キャラ作成"
+                   FontSize="17"
+                    FontAttributes="Bold"
+                   TextColor="Black"
+                    VerticalOptions="Center"/>
+        </HorizontalStackLayout>
 
-        <!-- Form -->
-        <ScrollView Grid.Row="1" Padding="20,0">
-            <VerticalStackLayout Spacing="16">
+        <BoxView Grid.Row="1"
+                BackgroundColor="#E0E0E0"/>
 
-                <VerticalStackLayout Spacing="4">
-                    <Label Text="キャラクター名 *" TextColor="#CCC" FontSize="13" />
-                    <Entry
-                        x:Name="NameEntry"
-                        Placeholder="例: さくら"
-                        BackgroundColor="#2A2A3E"
-                        TextColor="White"
-                        PlaceholderColor="#888" />
+        <!-- フォーム -->
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16,20"
+                    Spacing="20">
+
+                <!-- キャラの名前 -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="キャラの名前"
+                           FontSize="14"
+                            FontAttributes="Bold"
+                            TextColor="Black"/>
+                    <Border Stroke="#CCCCCC"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 8"
+                            BackgroundColor="White"
+                            Padding="12,0">
+                        <Entry x:Name="NameEntry"
+                               Placeholder="例：ミカ"
+                               PlaceholderColor="#AAAAAA"
+                               TextColor="Black"
+                               BackgroundColor="Transparent"
+                               HeightRequest="48"/>
+                    </Border>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Spacing="4">
-                    <Label Text="性格・設定 *" TextColor="#CCC" FontSize="13" />
-                    <Editor
-                        x:Name="PersonalityEditor"
-                        Placeholder="例: 明るくて元気な女の子。語尾に「〜だよ！」をつける。"
-                        BackgroundColor="#2A2A3E"
-                        TextColor="White"
-                        PlaceholderColor="#888"
-                        MinimumHeightRequest="100"
-                        AutoSize="TextChanges" />
+                <!-- 性格の一言説明 -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="性格の一言説明"
+                           FontSize="14"
+                            FontAttributes="Bold"
+                            TextColor="Black"/>
+                    <Border Stroke="#CCCCCC"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 8"
+                            BackgroundColor="White"
+                            Padding="12,0">
+                        <Entry x:Name="ShortDescEntry"
+                               Placeholder="例：明るく活発な女の子"
+                               PlaceholderColor="#AAAAAA"
+                               TextColor="Black"
+                               BackgroundColor="Transparent"
+                               HeightRequest="48"/>
+                    </Border>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Spacing="4">
-                    <Label Text="音声 (AWS Polly)" TextColor="#CCC" FontSize="13" />
-                    <Picker
-                        x:Name="VoicePicker"
-                        TextColor="White"
-                        BackgroundColor="#2A2A3E"
-                        TitleColor="#888"
-                        Title="音声を選択">
-                        <Picker.ItemsSource>
-                            <x:Array Type="{x:Type x:String}">
-                                <x:String>Mizuki</x:String>
-                                <x:String>Takumi</x:String>
-                                <x:String>Kazuha</x:String>
-                                <x:String>Tomoko</x:String>
-                            </x:Array>
-                        </Picker.ItemsSource>
-                    </Picker>
+                <!-- 性格 -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="性格"
+                           FontSize="14"
+                            FontAttributes="Bold"
+                            TextColor="Black"/>
+                    <Border Stroke="#CCCCCC"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 8"
+                            BackgroundColor="White"
+                            Padding="12,8">
+                        <Editor x:Name="PersonalityEditor"
+                                Placeholder="例：優しくて少し照れ屋。相手の話をよく聞いてくれる。"
+                                PlaceholderColor="#AAAAAA"
+                                TextColor="Black"
+                                BackgroundColor="Transparent"
+                                MinimumHeightRequest="100"
+                                AutoSize="TextChanges"/>
+                    </Border>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="VRMファイル" TextColor="#CCC" FontSize="13" />
-                    <Label
-                        x:Name="VrmFileLabel"
-                        Text="ファイルが選択されていません"
-                        TextColor="#888"
-                        FontSize="13" />
-                    <Button
-                        Text="VRMファイルを選択"
-                        BackgroundColor="#374151"
-                        TextColor="White"
-                        CornerRadius="8"
-                        Clicked="OnSelectVrmClicked" />
-                    <ActivityIndicator
-                        x:Name="UploadIndicator"
-                        IsRunning="False"
+                <!-- 声 -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="声"
+                           FontSize="14"
+                            FontAttributes="Bold"
+                            TextColor="Black"/>
+                    <Border Stroke="#CCCCCC"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 8"
+                            BackgroundColor="White"
+                            Padding="8,0">
+                        <Picker x:Name="VoicePicker"
+                                Title="選択してください"
+                                TextColor="Black"
+                                BackgroundColor="Transparent">
+                            <Picker.ItemsSource>
+                                <x:Array Type="{x:Type x:String}">
+                                    <x:String>Mizuki</x:String>
+                                    <x:String>Takumi</x:String>
+                                    <x:String>Kazuha</x:String>
+                                    <x:String>Tomoko</x:String>
+                                </x:Array>
+                            </Picker.ItemsSource>
+                        </Picker>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- 容姿（アイコン） -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="容姿（アイコン）"
+                           FontSize="14"
+                            FontAttributes="Bold"
+                            TextColor="Black"/>
+                    <HorizontalStackLayout Spacing="8">
+                        <Button Text="ファイルを選択"
+                                BackgroundColor="#E0E0E0"
+                                TextColor="#333333"
+                                CornerRadius="6"
+                                FontSize="14"
+                                Clicked="OnSelectIconClicked"/>
+                        <Label x:Name="IconFileLabel"
+                               Text="選択されていません"
+                               TextColor="#888888"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                    <Label Text="※ 今はアイコンのみ。3Dモデルは後で設定できます"
+                           TextColor="#007AFF"
+                            FontSize="12"/>
+                </VerticalStackLayout>
+
+                <!-- エラー -->
+                <Label x:Name="ErrorLabel"
+                       TextColor="#FF3B30"
+                       IsVisible="False"/>
+
+                <ActivityIndicator x:Name="UploadIndicator"
+                                   IsRunning="False"
                         IsVisible="False"
-                        Color="#7C3AED" />
-                </VerticalStackLayout>
-
-                <Label
-                    x:Name="ErrorLabel"
-                    TextColor="#FF6B6B"
-                    IsVisible="False" />
+                                   Color="#007AFF"/>
 
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Save Button -->
-        <Button
-            Grid.Row="2"
-            Text="作成する"
-            BackgroundColor="#7C3AED"
-            TextColor="White"
-            CornerRadius="0"
-            FontSize="16"
-            HeightRequest="52"
-            Clicked="OnSaveClicked" />
+        <!-- 作成ボタン -->
+        <Button Grid.Row="3"
+                Text="作成"
+                BackgroundColor="#CCCCCC"
+                TextColor="White"
+                CornerRadius="0"
+                FontSize="17"
+                HeightRequest="56"
+                Clicked="OnSaveClicked"/>
     </Grid>
 </ContentPage>

@@ -48,7 +48,7 @@ namespace AICharacterMaker
                 cfg["AWS:Region"] ?? "ap-northeast-1"));
 
             builder.Services.AddSingleton<SpeechService>();
-
+            builder.Services.AddTransient<Pages.HomePage>();
             builder.Services.AddTransient<Pages.LoginPage>();
             builder.Services.AddTransient<Pages.CharaListPage>();
             builder.Services.AddTransient<Pages.ChatPage>();

@@ -7,50 +7,44 @@ namespace AICharacterMaker.Pages
     {
         private readonly FirebaseAuthService _auth;
         private readonly FirebaseService _firebase;
-        private string? _vrmUrl;
+        private string? _iconUrl;
 
         public CharaCreatePage(FirebaseAuthService auth, FirebaseService firebase)
         {
             InitializeComponent();
             _auth = auth;
             _firebase = firebase;
-            VoicePicker.SelectedIndex = 0;
         }
 
-        private async void OnSelectVrmClicked(object sender, EventArgs e)
+        private async void OnSelectIconClicked(object sender, EventArgs e)
         {
             try
             {
                 var result = await FilePicker.PickAsync(new PickOptions
                 {
-                    PickerTitle = "VRMファイルを選択",
-                    FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-                    {
-                        [DevicePlatform.Android] = ["application/octet-stream"],
-                        [DevicePlatform.iOS] = ["public.data"],
-                        [DevicePlatform.WinUI] = [".vrm"]
-                    })
+                    PickerTitle = "アイコン画像を選択",
+                    FileTypes = FilePickerFileType.Images
                 });
 
                 if (result == null) return;
 
                 UploadIndicator.IsVisible = true;
                 UploadIndicator.IsRunning = true;
-                VrmFileLabel.Text = $"アップロード中: {result.FileName}";
+                IconFileLabel.Text = $"アップロード中...";
 
                 using var stream = await result.OpenReadAsync();
-                _vrmUrl = await _firebase.UploadVrmAsync(
+                _iconUrl = await _firebase.UploadIconAsync(
                     _auth.UserId ?? "unknown",
                     result.FileName,
                     stream);
 
-                VrmFileLabel.Text = _vrmUrl != null
-                    ? $"✓ {result.FileName}"
+                IconFileLabel.Text = _iconUrl != null
+                    ? result.FileName
                     : "アップロードに失敗しました";
             }
             catch (Exception ex)
             {
-                VrmFileLabel.Text = $"エラー: {ex.Message}";
+                IconFileLabel.Text = $"エラー: {ex.Message}";
             }
             finally
             {
@@ -65,13 +59,7 @@ namespace AICharacterMaker.Pages
 
             if (string.IsNullOrWhiteSpace(NameEntry.Text))
             {
-                ErrorLabel.Text = "キャラクター名を入力してください";
-                ErrorLabel.IsVisible = true;
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(PersonalityEditor.Text))
-            {
-                ErrorLabel.Text = "性格・設定を入力してください";
+                ErrorLabel.Text = "キャラの名前を入力してください";
                 ErrorLabel.IsVisible = true;
                 return;
             }
@@ -79,10 +67,11 @@ namespace AICharacterMaker.Pages
             var character = new Character
             {
                 Name = NameEntry.Text.Trim(),
-                Personality = PersonalityEditor.Text.Trim(),
-                VrmUrl = _vrmUrl ?? string.Empty,
+                ShortDescription = ShortDescEntry.Text?.Trim() ?? string.Empty,
+                Personality = PersonalityEditor.Text?.Trim() ?? string.Empty,
+                IconUrl = _iconUrl ?? string.Empty,
                 TtsVoice = VoicePicker.SelectedItem?.ToString() ?? "Mizuki",
-                UserId = _auth.UserId ?? string.Empty
+                Creator = _auth.UserId ?? string.Empty
             };
 
             var id = await _firebase.CreateCharacterAsync(character);
